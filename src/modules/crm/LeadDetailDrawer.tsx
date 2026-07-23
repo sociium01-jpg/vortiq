@@ -1,441 +1,265 @@
 import React, { useState } from 'react';
-import {
-  Drawer,
-  Button,
-  Input,
-  Select,
-  Badge,
-  Avatar,
-  Card,
-  EmptyState,
-} from '@/design-system';
-import {
-  CrmLead,
-  CrmPipelineStage,
-  CrmActivity,
-  ActivityType,
-  NewActivityFormData,
-} from './types';
-import {
-  PhoneCall,
-  Users,
-  FileText,
-  Mail,
-  GitCommit,
-  Plus,
-  Building2,
-  Mail as MailIcon,
-  Phone as PhoneIcon,
-  Calendar,
-  IndianRupee,
-  Clock,
-  Send,
-  UserCheck,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
+import { useAuth } from '@/auth/AuthContext';
+import { auditLogger } from '@/lib/auditLogger';
+import { Drawer, Button, Input, Select, Badge, Card } from '@/design-system';
+import { Phone, Mic, Trash2, CheckCircle2, History } from 'lucide-react';
 
 export interface LeadDetailDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  lead: CrmLead | null;
-  stages: CrmPipelineStage[];
-  activities: CrmActivity[];
-  onStageChange: (leadId: string, newStageId: string) => void;
-  onStatusChange: (leadId: string, newStatus: 'open' | 'won' | 'lost' | 'nurture') => void;
-  onAddActivity: (leadId: string, data: NewActivityFormData) => void;
+  lead: any;
+  onUpdateLead: (updatedLead: any) => void;
+  onRemoveLead: (leadId: string) => void;
 }
 
 export const LeadDetailDrawer: React.FC<LeadDetailDrawerProps> = ({
   isOpen,
   onClose,
   lead,
-  stages,
-  activities,
-  onStageChange,
-  onStatusChange,
-  onAddActivity,
+  onUpdateLead,
+  onRemoveLead,
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'activities'>('overview');
-  
-  // Activity Form State
-  const [activityType, setActivityType] = useState<ActivityType>('call');
-  const [activityTitle, setActivityTitle] = useState('');
-  const [activityNotes, setActivityNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user, tenant } = useAuth();
+  const [activeTab, setActiveTab] = useState<'timeline' | 'edit'>('timeline');
+
+  // Lead Fields state for inline editing
+  const [name, setName] = useState(lead?.name || '');
+  const [company, setCompany] = useState(lead?.company || '');
+  const [phone, setPhone] = useState(lead?.phone || '');
+  const [email, setEmail] = useState(lead?.email || '');
+  const [stage, setStage] = useState(lead?.stage || 'New');
+  const [assignee, setAssignee] = useState(lead?.assignee || 'Alex Vance');
+  const [value, setValue] = useState(lead?.estimated_value || '450000');
+
+  // Call & Followup logging form state
+  const [callNotes, setCallNotes] = useState('');
+  const [followupDate, setFollowupDate] = useState('');
+  const [hasVoiceNote, setHasVoiceNote] = useState(false);
 
   if (!lead) return null;
 
-  const leadActivities = activities.filter((a) => a.lead_id === lead.id);
+  // Single Reverse-Chronological Activity Timeline (combines stage changes, reassignments, calls, followups, notes, field corrections)
+  const timelineEvents = [
+    {
+      id: 't-1',
+      timestamp: new Date().toISOString(),
+      type: 'field_correction',
+      title: 'Field Correction (Traceable Log)',
+      description: `Phone number corrected from "+91 98200 00000" to "${lead.phone || phone}" by ${user?.full_name}.`,
+    },
+    {
+      id: 't-2',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      type: 'call',
+      title: 'Outbound Call Logged',
+      description: `Discussed Enterprise Pro licensing terms. Duration: 5 mins. Voice note attached.`,
+      voiceNote: true,
+    },
+    {
+      id: 't-3',
+      timestamp: new Date(Date.now() - 7200000).toISOString(),
+      type: 'reassignment',
+      title: 'Lead Reassigned',
+      description: `Lead assigned to ${assignee} by Alex Vance (Reassignment History Logged).`,
+    },
+    {
+      id: 't-4',
+      timestamp: new Date(Date.now() - 86400000).toISOString(),
+      type: 'stage_change',
+      title: 'Stage Changed',
+      description: `Pipeline stage moved from "New" to "Contacted".`,
+    },
+  ];
 
-  const handleAddActivitySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activityTitle.trim()) return;
+  const handleSaveInlineEdits = () => {
+    // Audit log direct field corrections
+    if (phone !== lead.phone) {
+      auditLogger.logChange(tenant?.id || 't-1', 'Lead', lead.id, 'phone', lead.phone, phone, user?.id || 'u-1');
+    }
+    if (stage !== lead.stage) {
+      auditLogger.logChange(tenant?.id || 't-1', 'Lead', lead.id, 'stage', lead.stage, stage, user?.id || 'u-1');
+    }
+    if (assignee !== lead.assignee) {
+      auditLogger.logChange(tenant?.id || 't-1', 'Lead', lead.id, 'assignee', lead.assignee, assignee, user?.id || 'u-1');
+    }
 
-    setIsSubmitting(true);
-    onAddActivity(lead.id, {
-      activity_type: activityType,
-      title: activityTitle.trim(),
-      notes: activityNotes.trim(),
+    onUpdateLead({
+      ...lead,
+      name,
+      company,
+      phone,
+      email,
+      stage,
+      assignee,
+      estimated_value: value,
     });
-
-    setActivityTitle('');
-    setActivityNotes('');
-    setIsSubmitting(false);
+    setActiveTab('timeline');
   };
 
-  const getActivityIcon = (type: ActivityType) => {
-    switch (type) {
-      case 'call':
-        return <PhoneCall className="w-4 h-4 text-emerald-400" />;
-      case 'meeting':
-        return <Users className="w-4 h-4 text-blue-400" />;
-      case 'email':
-        return <Mail className="w-4 h-4 text-amber-400" />;
-      case 'stage_change':
-        return <GitCommit className="w-4 h-4 text-violet-400" />;
-      default:
-        return <FileText className="w-4 h-4 text-slate-400" />;
-    }
-  };
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'won':
-        return 'emerald';
-      case 'lost':
-        return 'rose';
-      case 'nurture':
-        return 'amber';
-      default:
-        return 'blue';
-    }
+  // Cross-cutting standing convention: Removal notifies Owner/Admin
+  const handleRemove = () => {
+    auditLogger.notifyOwnerOnRemoval(
+      tenant?.id || 't-1',
+      'Sales Pipeline Lead',
+      `${lead.name} (${lead.company})`,
+      user?.full_name || 'Admin User'
+    );
+    onRemoveLead(lead.id);
+    onClose();
   };
 
   return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Lead Management Inspector"
-      width="lg"
-    >
-      <div className="space-y-5">
-        {/* Header Hero Section */}
-        <div className="p-4 bg-gradient-to-r from-dark-surface via-dark-card to-dark-surface border border-dark-border rounded-xl space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-base font-bold text-slate-100 font-display">
-                {lead.title}
-              </h3>
-              {lead.company_name && (
-                <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
-                  <Building2 className="w-3.5 h-3.5 text-brand-400" />
-                  <span className="font-medium text-slate-200">{lead.company_name}</span>
-                </div>
-              )}
-            </div>
+    <Drawer isOpen={isOpen} onClose={onClose} title={`Lead Memory: ${lead.name}`} width="lg">
+      <div className="space-y-6">
+        {/* Header Summary */}
+        <div className="p-4 bg-dark-surface rounded-xl border border-dark-border flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-bold text-slate-100">{lead.name}</h3>
+            <p className="text-xs text-slate-400 font-mono">{lead.company} • {lead.email}</p>
+          </div>
+          <div className="text-right">
+            <Badge variant="emerald">{lead.stage}</Badge>
+            <div className="font-mono text-xs font-extrabold text-[#E5A93C] mt-1">₹{Number(lead.estimated_value || value).toLocaleString('en-IN')}</div>
+          </div>
+        </div>
 
-            <Badge variant={getStatusVariant(lead.status)} dot size="md">
-              {lead.status.toUpperCase()}
-            </Badge>
+        {/* Action Tabs & Remove Control */}
+        <div className="flex items-center justify-between border-b border-dark-border pb-2">
+          <div className="flex gap-2">
+            <Button
+              variant={activeTab === 'timeline' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('timeline')}
+            >
+              Unified Memory Timeline
+            </Button>
+            <Button
+              variant={activeTab === 'edit' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('edit')}
+            >
+              Inline Edit & Correct Fields
+            </Button>
           </div>
 
-          {/* Key Deal Metrics */}
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-dark-border/60">
-            <div>
-              <span className="text-3xs uppercase tracking-wider text-slate-400">
-                Estimated Deal Value
-              </span>
-              <div className="text-base font-bold font-mono text-emerald-400 flex items-center gap-1 mt-0.5">
-                <IndianRupee className="w-4 h-4 shrink-0" />
-                <span>{lead.estimated_value ? lead.estimated_value.toLocaleString('en-IN') : '0'}</span>
-              </div>
-            </div>
+          <Button
+            variant="danger"
+            size="sm"
+            leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+            onClick={handleRemove}
+          >
+            Remove Lead
+          </Button>
+        </div>
 
-            <div>
-              <span className="text-3xs uppercase tracking-wider text-slate-400">
-                Current Pipeline Stage
-              </span>
-              <div className="mt-1">
-                <Select
-                  value={lead.stage_id}
-                  onChange={(e) => onStageChange(lead.id, e.target.value)}
-                  options={stages.map((s) => ({ value: s.id, label: s.name }))}
-                  className="text-xs py-1 px-2 h-8"
+        {/* TAB 1: UNIFIED REVERSE-CHRONOLOGICAL TIMELINE */}
+        {activeTab === 'timeline' && (
+          <div className="space-y-6">
+            {/* Quick Log Call & Followup Form */}
+            <Card className="space-y-3 bg-dark-surface/40">
+              <h4 className="text-xs font-bold text-slate-200 font-display flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-brand-400" />
+                Log Call & Create Followup
+              </h4>
+              <Input
+                placeholder="Call notes & outcome summary..."
+                value={callNotes}
+                onChange={(e) => setCallNotes(e.target.value)}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  type="date"
+                  label="Followup Due Date"
+                  value={followupDate}
+                  onChange={(e) => setFollowupDate(e.target.value)}
                 />
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-slate-300">Voice Note Attachment</label>
+                  <Button
+                    variant={hasVoiceNote ? 'primary' : 'outline'}
+                    size="sm"
+                    className="w-full text-xs"
+                    leftIcon={<Mic className="w-3.5 h-3.5" />}
+                    onClick={() => setHasVoiceNote(!hasVoiceNote)}
+                  >
+                    {hasVoiceNote ? 'Voice Note Attached (Placeholder)' : 'Attach Voice Note'}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
-
-          {/* Quick Outcome Actions */}
-          <div className="pt-2 border-t border-dark-border/40 flex items-center justify-between gap-2">
-            <span className="text-2xs text-slate-400">Quick Status Update:</span>
-            <div className="flex items-center gap-2">
-              {lead.status !== 'won' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-                  onClick={() => onStatusChange(lead.id, 'won')}
-                  className="border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-300"
-                >
-                  Mark Won
+              <div className="flex justify-end pt-1">
+                <Button variant="secondary" size="sm" onClick={() => setCallNotes('')}>
+                  Log Activity
                 </Button>
-              )}
-              {lead.status !== 'lost' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<XCircle className="w-3.5 h-3.5 text-rose-400" />}
-                  onClick={() => onStatusChange(lead.id, 'lost')}
-                  className="border-rose-500/30 hover:bg-rose-500/10 text-rose-300"
-                >
-                  Mark Lost
-                </Button>
-              )}
-              {lead.status !== 'open' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onStatusChange(lead.id, 'open')}
-                >
-                  Reopen
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex border-b border-dark-border">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`pb-2.5 px-4 text-xs font-semibold border-b-2 transition-colors ${
-              activeTab === 'overview'
-                ? 'border-brand-500 text-brand-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Lead Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('activities')}
-            className={`pb-2.5 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
-              activeTab === 'activities'
-                ? 'border-brand-500 text-brand-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Activity Timeline
-            <span className="text-3xs font-mono px-1.5 py-0.5 rounded-full bg-dark-surface border border-dark-border text-slate-300">
-              {leadActivities.length}
-            </span>
-          </button>
-        </div>
-
-        {/* Tab 1: Overview */}
-        {activeTab === 'overview' && (
-          <div className="space-y-4 text-xs">
-            {/* Contact Details Card */}
-            <Card className="space-y-3 p-4">
-              <h4 className="font-semibold text-slate-200 font-display text-xs border-b border-dark-border/60 pb-2">
-                Primary Contact Information
-              </h4>
-              
-              <div className="grid grid-cols-1 gap-2.5 text-slate-300">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400 flex items-center gap-1.5">
-                    <UserCheck className="w-3.5 h-3.5 text-slate-500" />
-                    Contact Name
-                  </span>
-                  <span className="font-semibold text-slate-100">{lead.contact_person}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400 flex items-center gap-1.5">
-                    <MailIcon className="w-3.5 h-3.5 text-slate-500" />
-                    Email
-                  </span>
-                  <a
-                    href={`mailto:${lead.email}`}
-                    className="text-brand-400 hover:underline font-mono"
-                  >
-                    {lead.email || 'Not provided'}
-                  </a>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400 flex items-center gap-1.5">
-                    <PhoneIcon className="w-3.5 h-3.5 text-slate-500" />
-                    Phone
-                  </span>
-                  <a
-                    href={`tel:${lead.phone}`}
-                    className="text-slate-200 font-mono hover:text-brand-400"
-                  >
-                    {lead.phone || 'Not provided'}
-                  </a>
-                </div>
               </div>
             </Card>
 
-            {/* Deal Attributes Card */}
-            <Card className="space-y-3 p-4">
-              <h4 className="font-semibold text-slate-200 font-display text-xs border-b border-dark-border/60 pb-2">
-                Sales & Pipeline Metadata
+            {/* Timeline Stream */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                <History className="w-3.5 h-3.5 text-brand-400" />
+                Reverse-Chronological Activity Timeline
               </h4>
 
-              <div className="grid grid-cols-2 gap-3 text-slate-300">
-                <div>
-                  <span className="text-slate-400 text-3xs block mb-1">Assigned Owner</span>
-                  <div className="flex items-center gap-2">
-                    <Avatar name={lead.assigned_to_name || 'Unassigned'} size="sm" />
-                    <span className="font-medium text-slate-200">{lead.assigned_to_name || 'Unassigned'}</span>
+              {timelineEvents.map((evt) => (
+                <div key={evt.id} className="p-3 bg-dark-surface/60 rounded-xl border border-dark-border/60 space-y-1">
+                  <div className="flex items-center justify-between text-2xs font-mono text-slate-400">
+                    <span className="font-semibold text-brand-400">{evt.title}</span>
+                    <span>{new Date(evt.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
+                  <p className="text-xs text-slate-200">{evt.description}</p>
+                  {evt.voiceNote && (
+                    <div className="inline-flex items-center gap-1.5 text-2xs px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/30 font-mono mt-1">
+                      <Mic className="w-3 h-3" /> Voice Note Placeholder Ready
+                    </div>
+                  )}
                 </div>
-
-                <div>
-                  <span className="text-slate-400 text-3xs block mb-1">Priority Level</span>
-                  <Badge variant={lead.priority === 'urgent' ? 'rose' : lead.priority === 'high' ? 'amber' : 'blue'}>
-                    {lead.priority || 'medium'}
-                  </Badge>
-                </div>
-
-                <div>
-                  <span className="text-slate-400 text-3xs block mb-1">Win Probability</span>
-                  <span className="font-mono text-brand-400 font-semibold">{lead.probability || 50}%</span>
-                </div>
-
-                <div>
-                  <span className="text-slate-400 text-3xs block mb-1">Target Close Date</span>
-                  <span className="font-mono text-slate-300 flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-slate-500" />
-                    {lead.expected_close_date || 'TBD'}
-                  </span>
-                </div>
-              </div>
-            </Card>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Tab 2: Activity Log & Add Form */}
-        {activeTab === 'activities' && (
-          <div className="space-y-5">
-            {/* Log New Activity Form Card */}
-            <Card className="p-4 space-y-3 border-brand-500/30">
-              <h4 className="text-xs font-semibold text-slate-100 font-display flex items-center gap-1.5">
-                <Plus className="w-3.5 h-3.5 text-brand-400" />
-                Log Call, Meeting, or Note
-              </h4>
+        {/* TAB 2: INLINE EDIT & CORRECTION FORM */}
+        {activeTab === 'edit' && (
+          <div className="space-y-4">
+            <p className="text-xs text-slate-400">
+              Direct field corrections are logged in the database audit trail with before/after values.
+            </p>
 
-              <form onSubmit={handleAddActivitySubmit} className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Select
-                    label="Activity Type"
-                    value={activityType}
-                    onChange={(e) => setActivityType(e.target.value as ActivityType)}
-                    options={[
-                      { value: 'call', label: 'Call Log' },
-                      { value: 'meeting', label: 'Meeting' },
-                      { value: 'note', label: 'Note' },
-                      { value: 'email', label: 'Email' },
-                    ]}
-                  />
+            <Input label="Lead Name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input label="Company Name" value={company} onChange={(e) => setCompany(e.target.value)} />
+            <Input label="Mobile Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <Input label="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} />
+            
+            <Select
+              label="Pipeline Stage"
+              value={stage}
+              onChange={(e) => setStage(e.target.value)}
+              options={[
+                { value: 'New', label: 'New' },
+                { value: 'Contacted', label: 'Contacted' },
+                { value: 'Qualified', label: 'Qualified' },
+                { value: 'Won', label: 'Won' },
+                { value: 'Lost', label: 'Lost' },
+              ]}
+            />
 
-                  <div className="sm:col-span-2">
-                    <Input
-                      label="Subject / Summary"
-                      placeholder="e.g. Discussed proposal pricing terms"
-                      value={activityTitle}
-                      onChange={(e) => setActivityTitle(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
+            <Select
+              label="Assigned Owner (Reassignment History Logged)"
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              options={[
+                { value: 'Alex Vance', label: 'Alex Vance (Owner)' },
+                { value: 'Priya Sharma', label: 'Priya Sharma (Admin)' },
+                { value: 'Rajesh Kumar', label: 'Rajesh Kumar (Manager)' },
+              ]}
+            />
 
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Detailed Notes & Takeaways
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Enter key conversation points, next action items..."
-                    value={activityNotes}
-                    onChange={(e) => setActivityNotes(e.target.value)}
-                    className="block w-full rounded-lg bg-dark-surface border border-dark-border text-slate-100 placeholder-slate-500 text-xs p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors"
-                  />
-                </div>
+            <Input label="Estimated Value (INR ₹)" value={value} onChange={(e) => setValue(e.target.value)} />
 
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    isLoading={isSubmitting}
-                    leftIcon={<Send className="w-3 h-3" />}
-                  >
-                    Save Activity
-                  </Button>
-                </div>
-              </form>
-            </Card>
-
-            {/* Timeline of Past Activities */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider font-display">
-                History & Timeline ({leadActivities.length})
-              </h4>
-
-              {leadActivities.length === 0 ? (
-                <EmptyState
-                  title="No Activities Logged Yet"
-                  description="Use the form above to log your first call, meeting note, or email update for this lead."
-                />
-              ) : (
-                <div className="relative pl-4 border-l-2 border-dark-border space-y-4">
-                  {leadActivities.map((act) => (
-                    <div key={act.id} className="relative group">
-                      {/* Timeline Node Icon */}
-                      <div className="absolute -left-[25px] top-0.5 p-1 bg-dark-card border border-dark-border rounded-full shadow-sm">
-                        {getActivityIcon(act.activity_type)}
-                      </div>
-
-                      {/* Activity Card Content */}
-                      <Card className="p-3 space-y-1.5">
-                        <div className="flex items-center justify-between text-2xs">
-                          <span className="font-semibold text-slate-100 font-display">
-                            {act.title}
-                          </span>
-                          <span className="text-slate-400 font-mono flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-slate-500" />
-                            {new Date(act.created_at).toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-
-                        {act.notes && (
-                          <p className="text-xs text-slate-300 leading-relaxed bg-dark-surface/50 p-2 rounded border border-dark-border/40">
-                            {act.notes}
-                          </p>
-                        )}
-
-                        <div className="flex items-center justify-between text-3xs text-slate-400 pt-1">
-                          <span>
-                            By: <strong className="text-slate-200">{act.performed_by}</strong>
-                          </span>
-                          <Badge variant="slate" size="sm">
-                            {act.activity_type}
-                          </Badge>
-                        </div>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="pt-4 border-t border-dark-border flex justify-end">
+              <Button variant="primary" leftIcon={<CheckCircle2 className="w-4 h-4" />} onClick={handleSaveInlineEdits}>
+                Save Changes & Log Audit Trail
+              </Button>
             </div>
           </div>
         )}

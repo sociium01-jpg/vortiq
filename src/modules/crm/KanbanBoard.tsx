@@ -24,6 +24,7 @@ export interface KanbanBoardProps {
   onLeadClick: (lead: CrmLead) => void;
   onLeadStageChange: (leadId: string, newStageId: string) => void;
   onAddLeadToStage?: (stageId: string) => void;
+  onSelectLead?: (lead: CrmLead) => void;
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
