@@ -28,15 +28,19 @@ import {
   Layers,
   ChevronRight,
   IndianRupee,
+  LogIn,
 } from 'lucide-react';
+import { AuthModal } from '@/auth/AuthModal';
+import { OnboardingWizardModal } from '@/auth/OnboardingWizardModal';
 
 export type ModuleTab = 'crm' | 'finance' | 'hr' | 'marketing' | 'tasks' | 'inventory' | 'admin' | 'notifications';
 
 export const AppLayout: React.FC = () => {
-  const { user, tenant, loginDemo } = useAuth();
+  const { user, tenant, loginDemo, isOnboardingOpen, setIsOnboardingOpen } = useAuth();
   const [activeTab, setActiveTab] = useState<ModuleTab>('crm');
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Mock global notifications feed for header & drawer
   const [notifications, setNotifications] = useState<AppNotification[]>([
@@ -186,17 +190,32 @@ export const AppLayout: React.FC = () => {
 
           <div className="h-6 w-px bg-dark-border" />
 
-          {/* RBAC Role Switcher & User Profile */}
+          {/* Account Login / Setup & Profile */}
           <div className="flex items-center gap-2">
-            <Avatar name={user?.full_name || 'Admin User'} size="sm" />
-            <div className="hidden lg:block text-left">
-              <div className="text-xs font-semibold text-slate-200">{user?.full_name}</div>
-              <div className="text-2xs text-brand-400 font-mono font-medium">{user?.role}</div>
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<LogIn className="w-3.5 h-3.5" />}
+              onClick={() => setIsAuthModalOpen(true)}
+              className="hidden sm:flex"
+            >
+              Sign In / Setup
+            </Button>
+
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsAuthModalOpen(true)}>
+              <Avatar name={user?.full_name || 'Admin User'} size="sm" />
+              <div className="hidden lg:block text-left">
+                <div className="text-xs font-semibold text-slate-200">{user?.full_name}</div>
+                <div className="text-2xs text-brand-400 font-mono font-medium">{user?.role} • {tenant?.name}</div>
+              </div>
             </div>
+
             <Select
               options={[
                 { value: 'OWNER', label: 'OWNER' },
                 { value: 'ADMIN', label: 'ADMIN' },
+                { value: 'HR_ADMIN', label: 'HR_ADMIN' },
+                { value: 'FINANCE_ADMIN', label: 'FINANCE_ADMIN' },
                 { value: 'MANAGER', label: 'MANAGER' },
                 { value: 'MEMBER', label: 'MEMBER' },
               ]}
@@ -276,6 +295,10 @@ export const AppLayout: React.FC = () => {
           { id: '8', title: 'Notifications Center', category: 'Notifications', icon: <Bell className="w-4 h-4 text-rose-400" />, onSelect: () => setActiveTab('notifications') },
         ]}
       />
+
+      {/* Auth & Setup Modals */}
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <OnboardingWizardModal isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
     </div>
   );
 };
