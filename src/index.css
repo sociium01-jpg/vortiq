@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #090d16;
+    --color-card: #0f172a;
+    --color-surface: #1e293b;
+    --color-border: #334155;
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #94a3b8;
+    --color-brand-primary: #10b981;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Custom Data-Dense Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #090d16;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Panel */
+  .glass-panel {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+  }
+
+  /* High Data-Density Table Cells */
+  .dense-cell {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+}
