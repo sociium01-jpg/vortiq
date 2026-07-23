@@ -8,13 +8,23 @@ export default {
   theme: {
     extend: {
       colors: {
+        landing: {
+          bg: '#0B0F1D',
+          card: '#141A2E',
+          hover: '#1B2238',
+          gold: '#E5A93C',
+          teal: '#22B8A3',
+          text: '#EDEEF3',
+          muted: '#8D93AC',
+          border: 'rgba(237,238,243,0.10)',
+        },
         brand: {
           50: '#ecfdf5',
           100: '#d1fae5',
           200: '#a7f3d0',
           300: '#6ee7b7',
           400: '#34d399',
-          500: '#10b981', // Main accent Emerald
+          500: '#10b981',
           600: '#059669',
           700: '#047857',
           800: '#065f46',
@@ -32,9 +42,10 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Outfit', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ['IBM Plex Sans', 'sans-serif'],
+        heading: ['Space Grotesk', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
+        display: ['Space Grotesk', 'sans-serif'],
       },
       fontSize: {
         '2xs': '0.6875rem',
