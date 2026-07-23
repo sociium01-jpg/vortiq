@@ -4,7 +4,7 @@ import { Search, UserCheck, CheckSquare, Package, Shield, Bell, ArrowRight } fro
 export interface CommandItem {
   id: string;
   title: string;
-  category: 'CRM' | 'Finance' | 'HR' | 'Tasks' | 'Inventory' | 'Admin' | 'Notifications';
+  category: 'CRM' | 'Finance' | 'HR' | 'Marketing' | 'Tasks' | 'Inventory' | 'Admin' | 'Notifications';
   icon: React.ReactNode;
   onSelect: () => void;
 }

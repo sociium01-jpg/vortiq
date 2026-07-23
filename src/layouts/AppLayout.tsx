@@ -3,6 +3,7 @@ import { useAuth } from '@/auth/AuthContext';
 import { SalesPipelineModule } from '@/modules/crm/SalesPipelineModule';
 import { FinanceModule } from '@/modules/finance/FinanceModule';
 import { HRModule } from '@/modules/hr/HRModule';
+import { MarketingModule } from '@/modules/marketing/MarketingModule';
 import { TaskModule } from '@/modules/tasks/TaskModule';
 import { InventoryModule } from '@/modules/inventory/InventoryModule';
 import { AdminModule } from '@/modules/admin/AdminModule';
@@ -18,6 +19,7 @@ import {
 import {
   Users,
   UserCheck,
+  Megaphone,
   CheckSquare,
   Package,
   Shield,
@@ -28,7 +30,7 @@ import {
   IndianRupee,
 } from 'lucide-react';
 
-export type ModuleTab = 'crm' | 'finance' | 'hr' | 'tasks' | 'inventory' | 'admin' | 'notifications';
+export type ModuleTab = 'crm' | 'finance' | 'hr' | 'marketing' | 'tasks' | 'inventory' | 'admin' | 'notifications';
 
 export const AppLayout: React.FC = () => {
   const { user, tenant, loginDemo } = useAuth();
@@ -94,6 +96,7 @@ export const AppLayout: React.FC = () => {
     { id: 'crm', label: 'CRM Pipeline', icon: <Users className="w-4 h-4" /> },
     { id: 'finance', label: 'Finance & Tax', icon: <IndianRupee className="w-4 h-4" /> },
     { id: 'hr', label: 'HR & Payroll', icon: <UserCheck className="w-4 h-4" /> },
+    { id: 'marketing', label: 'Marketing & Data', icon: <Megaphone className="w-4 h-4" /> },
     { id: 'tasks', label: 'Tasks & Docs', icon: <CheckSquare className="w-4 h-4" /> },
     { id: 'inventory', label: 'Inventory & Floor', icon: <Package className="w-4 h-4" />, badge: 'Alert' },
     { id: 'admin', label: 'Admin & Billing', icon: <Shield className="w-4 h-4" /> },
@@ -241,6 +244,7 @@ export const AppLayout: React.FC = () => {
         {activeTab === 'crm' && <SalesPipelineModule />}
         {activeTab === 'finance' && <FinanceModule />}
         {activeTab === 'hr' && <HRModule />}
+        {activeTab === 'marketing' && <MarketingModule />}
         {activeTab === 'tasks' && <TaskModule />}
         {activeTab === 'inventory' && <InventoryModule />}
         {activeTab === 'admin' && <AdminModule />}
@@ -263,11 +267,13 @@ export const AppLayout: React.FC = () => {
         onClose={() => setIsCommandOpen(false)}
         items={[
           { id: '1', title: 'CRM Pipeline & Deals', category: 'CRM', icon: <Users className="w-4 h-4 text-emerald-400" />, onSelect: () => setActiveTab('crm') },
-          { id: '2', title: 'HR Directory & Statutory Payroll', category: 'HR', icon: <UserCheck className="w-4 h-4 text-brand-400" />, onSelect: () => setActiveTab('hr') },
-          { id: '3', title: 'Task Board & Confluence Wiki', category: 'Tasks', icon: <CheckSquare className="w-4 h-4 text-blue-400" />, onSelect: () => setActiveTab('tasks') },
-          { id: '4', title: 'Inventory Register & Photo Scan', category: 'Inventory', icon: <Package className="w-4 h-4 text-amber-400" />, onSelect: () => setActiveTab('inventory') },
-          { id: '5', title: 'Admin Settings & Razorpay Payments', category: 'Admin', icon: <Shield className="w-4 h-4 text-violet-400" />, onSelect: () => setActiveTab('admin') },
-          { id: '6', title: 'Notifications Center', category: 'Notifications', icon: <Bell className="w-4 h-4 text-rose-400" />, onSelect: () => setActiveTab('notifications') },
+          { id: '2', title: 'Finance & Tax Invoicing', category: 'Finance', icon: <IndianRupee className="w-4 h-4 text-emerald-400" />, onSelect: () => setActiveTab('finance') },
+          { id: '3', title: 'HR Directory & Statutory Payroll', category: 'HR', icon: <UserCheck className="w-4 h-4 text-brand-400" />, onSelect: () => setActiveTab('hr') },
+          { id: '4', title: 'Marketing Campaigns & Segments', category: 'Marketing', icon: <Megaphone className="w-4 h-4 text-amber-400" />, onSelect: () => setActiveTab('marketing') },
+          { id: '5', title: 'Task Board & Confluence Wiki', category: 'Tasks', icon: <CheckSquare className="w-4 h-4 text-blue-400" />, onSelect: () => setActiveTab('tasks') },
+          { id: '6', title: 'Inventory Register & Photo Scan', category: 'Inventory', icon: <Package className="w-4 h-4 text-amber-400" />, onSelect: () => setActiveTab('inventory') },
+          { id: '7', title: 'Admin Settings & Razorpay Payments', category: 'Admin', icon: <Shield className="w-4 h-4 text-violet-400" />, onSelect: () => setActiveTab('admin') },
+          { id: '8', title: 'Notifications Center', category: 'Notifications', icon: <Bell className="w-4 h-4 text-rose-400" />, onSelect: () => setActiveTab('notifications') },
         ]}
       />
     </div>
