@@ -210,7 +210,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             ) : null}
 
                             <Avatar
-                              name={lead.assigned_to_name || 'Unassigned'}
+                              name={lead.assignee_name || 'Unassigned'}
                               size="sm"
                             />
                           </div>

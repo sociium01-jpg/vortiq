@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { CrmModule } from '@/modules/crm/CrmModule';
+import { SalesPipelineModule } from '@/modules/crm/SalesPipelineModule';
 import { TaskModule } from '@/modules/tasks/TaskModule';
 import { InventoryModule } from '@/modules/inventory/InventoryModule';
 import { AdminModule } from '@/modules/admin/AdminModule';
@@ -232,7 +232,7 @@ export const AppLayout: React.FC = () => {
 
       {/* Active Module Viewport */}
       <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
-        {activeTab === 'crm' && <CrmModule />}
+        {activeTab === 'crm' && <SalesPipelineModule />}
         {activeTab === 'tasks' && <TaskModule />}
         {activeTab === 'inventory' && <InventoryModule />}
         {activeTab === 'admin' && <AdminModule />}
