@@ -57,13 +57,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = (requiredRole: UserRole): boolean => {
     if (!user) return false;
+    if (user.role === 'OWNER' || user.role === 'ADMIN') return true;
+    if (user.role === requiredRole) return true;
     const hierarchy: Record<UserRole, number> = {
       MEMBER: 1,
       MANAGER: 2,
-      ADMIN: 3,
-      OWNER: 4,
+      HR_ADMIN: 3,
+      FINANCE_ADMIN: 3,
+      ADMIN: 4,
+      OWNER: 5,
     };
-    return hierarchy[user.role] >= hierarchy[requiredRole];
+    return (hierarchy[user.role] || 0) >= (hierarchy[requiredRole] || 99);
   };
 
   return (

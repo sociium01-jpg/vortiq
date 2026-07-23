@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { SalesPipelineModule } from '@/modules/crm/SalesPipelineModule';
+import { FinanceModule } from '@/modules/finance/FinanceModule';
+import { HRModule } from '@/modules/hr/HRModule';
 import { TaskModule } from '@/modules/tasks/TaskModule';
 import { InventoryModule } from '@/modules/inventory/InventoryModule';
 import { AdminModule } from '@/modules/admin/AdminModule';
@@ -15,6 +17,7 @@ import {
 } from '@/design-system';
 import {
   Users,
+  UserCheck,
   CheckSquare,
   Package,
   Shield,
@@ -22,9 +25,10 @@ import {
   Command,
   Layers,
   ChevronRight,
+  IndianRupee,
 } from 'lucide-react';
 
-export type ModuleTab = 'crm' | 'tasks' | 'inventory' | 'admin' | 'notifications';
+export type ModuleTab = 'crm' | 'finance' | 'hr' | 'tasks' | 'inventory' | 'admin' | 'notifications';
 
 export const AppLayout: React.FC = () => {
   const { user, tenant, loginDemo } = useAuth();
@@ -88,6 +92,8 @@ export const AppLayout: React.FC = () => {
 
   const navItems: { id: ModuleTab; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: 'crm', label: 'CRM Pipeline', icon: <Users className="w-4 h-4" /> },
+    { id: 'finance', label: 'Finance & Tax', icon: <IndianRupee className="w-4 h-4" /> },
+    { id: 'hr', label: 'HR & Payroll', icon: <UserCheck className="w-4 h-4" /> },
     { id: 'tasks', label: 'Tasks & Docs', icon: <CheckSquare className="w-4 h-4" /> },
     { id: 'inventory', label: 'Inventory & Floor', icon: <Package className="w-4 h-4" />, badge: 'Alert' },
     { id: 'admin', label: 'Admin & Billing', icon: <Shield className="w-4 h-4" /> },
@@ -117,14 +123,14 @@ export const AppLayout: React.FC = () => {
         </div>
 
         {/* Global Module Navigation Pills (Desktop) */}
-        <nav className="hidden md:flex items-center gap-1.5 bg-dark-surface/60 p-1 rounded-xl border border-dark-border/80">
+        <nav className="hidden md:flex items-center gap-1 bg-dark-surface/60 p-1 rounded-xl border border-dark-border/80">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   isActive
                     ? 'bg-brand-500 text-dark-bg font-bold shadow-md shadow-brand-500/20'
                     : 'text-slate-300 hover:text-white hover:bg-dark-border/50'
@@ -233,6 +239,8 @@ export const AppLayout: React.FC = () => {
       {/* Active Module Viewport */}
       <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
         {activeTab === 'crm' && <SalesPipelineModule />}
+        {activeTab === 'finance' && <FinanceModule />}
+        {activeTab === 'hr' && <HRModule />}
         {activeTab === 'tasks' && <TaskModule />}
         {activeTab === 'inventory' && <InventoryModule />}
         {activeTab === 'admin' && <AdminModule />}
@@ -255,10 +263,11 @@ export const AppLayout: React.FC = () => {
         onClose={() => setIsCommandOpen(false)}
         items={[
           { id: '1', title: 'CRM Pipeline & Deals', category: 'CRM', icon: <Users className="w-4 h-4 text-emerald-400" />, onSelect: () => setActiveTab('crm') },
-          { id: '2', title: 'Task Board & Confluence Wiki', category: 'Tasks', icon: <CheckSquare className="w-4 h-4 text-blue-400" />, onSelect: () => setActiveTab('tasks') },
-          { id: '3', title: 'Inventory Register & Photo Scan', category: 'Inventory', icon: <Package className="w-4 h-4 text-amber-400" />, onSelect: () => setActiveTab('inventory') },
-          { id: '4', title: 'Admin Settings & Razorpay Payments', category: 'Admin', icon: <Shield className="w-4 h-4 text-violet-400" />, onSelect: () => setActiveTab('admin') },
-          { id: '5', title: 'Notifications Center', category: 'Notifications', icon: <Bell className="w-4 h-4 text-rose-400" />, onSelect: () => setActiveTab('notifications') },
+          { id: '2', title: 'HR Directory & Statutory Payroll', category: 'HR', icon: <UserCheck className="w-4 h-4 text-brand-400" />, onSelect: () => setActiveTab('hr') },
+          { id: '3', title: 'Task Board & Confluence Wiki', category: 'Tasks', icon: <CheckSquare className="w-4 h-4 text-blue-400" />, onSelect: () => setActiveTab('tasks') },
+          { id: '4', title: 'Inventory Register & Photo Scan', category: 'Inventory', icon: <Package className="w-4 h-4 text-amber-400" />, onSelect: () => setActiveTab('inventory') },
+          { id: '5', title: 'Admin Settings & Razorpay Payments', category: 'Admin', icon: <Shield className="w-4 h-4 text-violet-400" />, onSelect: () => setActiveTab('admin') },
+          { id: '6', title: 'Notifications Center', category: 'Notifications', icon: <Bell className="w-4 h-4 text-rose-400" />, onSelect: () => setActiveTab('notifications') },
         ]}
       />
     </div>
