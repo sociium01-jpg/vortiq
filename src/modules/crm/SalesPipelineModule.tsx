@@ -1,5 +1,11 @@
+// ─────────────────────────────────────────────────────────────
+// Vortiq Sales Pipeline (HubSpot Sales Hub & Zoho CRM Parity)
+// Includes Stage-Gated Blueprints, Workflows, Forecasting, Cadences,
+// Lead Scoring, Call Transcripts UI, Booking Links, & Custom Objects.
+// ─────────────────────────────────────────────────────────────
+
 import React, { useState, useCallback } from 'react';
-import { Button } from '@/design-system';
+import { Button, Badge } from '@/design-system';
 import {
   CrmLead,
   CrmActivity,
@@ -10,33 +16,42 @@ import {
   SEED_LEADS,
   SEED_ACTIVITIES,
   SEED_FOLLOWUPS,
+  SEED_STAGE_REQUIREMENTS,
+  SEED_WORKFLOW_RULES,
+  StageRequirement,
 } from './types';
 import { KanbanBoard } from './KanbanBoard';
-import { LeadListView } from './LeadListView';
 import { LeadDetailPage } from './LeadDetailPage';
-import { TodayDashboard } from './TodayDashboard';
 import { BulkLeadImporterModal } from './BulkLeadImporterModal';
+import { BlueprintValidationModal } from './BlueprintValidationModal';
+import { ForecastDashboard } from './ForecastDashboard';
+import { WorkflowBuilder } from './WorkflowBuilder';
+import { SequenceManager } from './SequenceManager';
+import { LeadScoringManager } from './LeadScoringManager';
+import { SchedulingLinkGenerator } from './SchedulingLinkGenerator';
+import { CustomFieldManager } from './CustomFieldManager';
+import { evaluateAndRunWorkflows } from './WorkflowEngine';
 import {
   LayoutGrid,
-  List,
-  Calendar,
   Upload,
   Plus,
   TrendingUp,
-  IndianRupee,
-  Users,
-  AlertCircle,
+  Zap,
+  Mail,
+  Flame,
+  Link2,
+  Sliders,
 } from 'lucide-react';
 
-type View = 'kanban' | 'list' | 'today';
+type View = 'kanban' | 'forecast' | 'workflows' | 'cadences' | 'scoring' | 'scheduling' | 'customizer';
 
-// ── New Lead Defaults ──────────────────────────────────────────────────────────
 const makeNewLead = (): CrmLead => ({
   id: `lead-${Date.now()}`,
-  organization_id: 'org-1',
+  organization_id: 'tenant-prod-001',
   title: 'New Lead',
   name: '',
   contact_person: '',
+  stage: 'new',
   stage_id: 'new',
   estimated_value: 0,
   currency: 'INR',
@@ -50,7 +65,6 @@ const makeNewLead = (): CrmLead => ({
 });
 
 export const SalesPipelineModule: React.FC = () => {
-  // ── State ──────────────────────────────────────────────────────────────────
   const [view, setView] = useState<View>('kanban');
   const [leads, setLeads] = useState<CrmLead[]>(SEED_LEADS);
   const [activities, setActivities] = useState<Record<string, CrmActivity[]>>(SEED_ACTIVITIES);
@@ -59,291 +73,242 @@ export const SalesPipelineModule: React.FC = () => {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [showImporter, setShowImporter] = useState(false);
 
-  // ── Derived state ──────────────────────────────────────────────────────────
-  const selectedLead = selectedLeadId ? leads.find(l => l.id === selectedLeadId) : null;
-  const selectedActivities = selectedLeadId ? (activities[selectedLeadId] || []) : [];
-  const followupsMap = Object.fromEntries(followups.map(f => [f.id, f]));
+  // Blueprint Stage-Gating State
+  const [blueprintModalOpen, setBlueprintModalOpen] = useState(false);
+  const [pendingAdvance, setPendingAdvance] = useState<{
+    lead: CrmLead;
+    targetStage: LeadStageId;
+    requirement: StageRequirement;
+  } | null>(null);
 
-  const totalPipelineValue = leads.reduce((sum, l) => sum + (l.estimated_value || 0), 0);
-  const openLeads = leads.filter(l => l.stage_id !== 'won' && l.stage_id !== 'lost');
-  const overdueFollowups = followups.filter(f => f.status === 'pending' && f.due_date < new Date().toISOString().split('T')[0]);
+  // Handle stage change request with Blueprint Stage-Gating Check
+  const handleStageChangeRequest = useCallback(
+    (leadId: string, newStageId: string) => {
+      const targetLead = leads.find((l) => l.id === leadId);
+      if (!targetLead) return;
 
-  // ── Lead actions ───────────────────────────────────────────────────────────
-  const addActivity = useCallback((leadId: string, act: CrmActivity) => {
-    setActivities(prev => ({
-      ...prev,
-      [leadId]: [act, ...(prev[leadId] || [])],
-    }));
-  }, []);
+      const currentStage = (targetLead.stage || targetLead.stage_id || 'new') as LeadStageId;
+      const targetStage = newStageId as LeadStageId;
 
-  const handleLeadStageChange = useCallback((leadId: string, newStageId: string) => {
-    setLeads(prev => prev.map(l => {
-      if (l.id !== leadId) return l;
-      const act: CrmActivity = {
-        id: `act-${Date.now()}`,
-        lead_id: leadId,
-        organization_id: 'org-1',
-        type: 'stage_change',
-        performed_by_id: 'u-1',
-        performed_by_name: 'Alex Vance',
-        performed_at: new Date().toISOString(),
-        stage_from: l.stage_id,
-        stage_to: newStageId as LeadStageId,
-      };
-      addActivity(leadId, act);
-      return { ...l, stage_id: newStageId as LeadStageId, updated_at: new Date().toISOString() };
-    }));
-  }, [addActivity]);
+      if (currentStage === targetStage) return;
 
-  const handleLeadAssigneeChange = useCallback((leadId: string, newAssigneeId: string) => {
-    setLeads(prev => prev.map(l => {
-      if (l.id !== leadId) return l;
-      const act: CrmActivity = {
-        id: `act-${Date.now()}`,
-        lead_id: leadId,
-        organization_id: 'org-1',
-        type: 'reassignment',
-        performed_by_id: 'u-1',
-        performed_by_name: 'Alex Vance',
-        performed_at: new Date().toISOString(),
-        assignee_from_id: l.assignee_id,
-        assignee_from_name: l.assignee_name,
-        assignee_to_id: newAssigneeId,
-        assignee_to_name: newAssigneeId,
-      };
-      addActivity(leadId, act);
-      return { ...l, assignee_id: newAssigneeId, updated_at: new Date().toISOString() };
-    }));
-  }, [addActivity]);
+      // Find stage-gating requirement
+      const req = SEED_STAGE_REQUIREMENTS.find(
+        (r) => r.from_stage === currentStage && r.to_stage === targetStage
+      );
 
-  const handleLeadUpdate = useCallback((updated: CrmLead) => {
-    setLeads(prev => prev.map(l => l.id === updated.id ? updated : l));
-  }, []);
+      // Check if lead has missing required fields
+      let hasMissing = false;
+      if (req) {
+        req.required_fields.forEach((f) => {
+          if (!targetLead[f] || (typeof targetLead[f] === 'number' && (targetLead[f] as number) <= 0)) {
+            hasMissing = true;
+          }
+        });
+      }
 
-  const handleLeadRemove = useCallback((leadId: string) => {
-    // In a real app: POST to notification API for Owner/Admin
-    console.warn('[VORTIQ] Removal alert: Lead removed by Alex Vance — Owner/Admin notified.');
-    setLeads(prev => prev.filter(l => l.id !== leadId));
-    setSelectedLeadId(null);
-  }, []);
+      if (req && (hasMissing || req.checklist_items.length > 0)) {
+        // Enforce Blueprint Stage-Gating Modal
+        setPendingAdvance({ lead: targetLead, targetStage, requirement: req });
+        setBlueprintModalOpen(true);
+        return;
+      }
 
-  const handleCallLogged = useCallback((call: CrmCall, activity: CrmActivity) => {
-    if (call.id) {
-      setCalls(prev => ({ ...prev, [call.id]: call }));
-      setLeads(prev => prev.map(l =>
-        l.id === call.lead_id ? { ...l, calls_count: (l.calls_count || 0) + 1 } : l
-      ));
-    }
-    if (activity.lead_id) addActivity(activity.lead_id, activity);
-  }, [addActivity]);
+      // If no missing requirements, update stage immediately
+      executeStageAdvance(leadId, targetStage, {});
+    },
+    [leads]
+  );
 
-  const handleFollowupCreated = useCallback((followup: CrmFollowup, activity: CrmActivity) => {
-    setFollowups(prev => [followup, ...prev]);
-    setLeads(prev => prev.map(l =>
-      l.id === followup.lead_id
-        ? { ...l, followups_count: (l.followups_count || 0) + 1, open_followups_count: (l.open_followups_count || 0) + 1 }
-        : l
-    ));
-    addActivity(activity.lead_id, activity);
-  }, [addActivity]);
+  const executeStageAdvance = (leadId: string, targetStage: LeadStageId, updates: Partial<CrmLead>) => {
+    setLeads((prev) =>
+      prev.map((l) => {
+        if (l.id !== leadId) return l;
+        const updated: CrmLead = {
+          ...l,
+          ...updates,
+          stage: targetStage,
+          stage_id: targetStage,
+          updated_at: new Date().toISOString(),
+        };
 
-  const handleNoteAdded = useCallback((_leadId: string, _note: string, activity: CrmActivity) => {
-    addActivity(activity.lead_id, activity);
-    setLeads(prev => prev.map(l => l.id === activity.lead_id ? { ...l, notes_count: (l.notes_count || 0) + 1 } : l));
-  }, [addActivity]);
+        // Run Workflow Rules Engine on stage change
+        evaluateAndRunWorkflows(updated, 'stage_changed', SEED_WORKFLOW_RULES, {
+          prevStage: (l.stage || l.stage_id) as LeadStageId,
+          newStage: targetStage,
+        });
 
-  const handleMarkFollowupDone = useCallback((followupId: string) => {
-    setFollowups(prev => prev.map(f =>
-      f.id === followupId ? { ...f, status: 'done', completed_at: new Date().toISOString() } : f
-    ));
-    const fu = followups.find(f => f.id === followupId);
-    if (fu) {
-      setLeads(prev => prev.map(l => l.id === fu.lead_id ? { ...l, open_followups_count: Math.max(0, (l.open_followups_count || 1) - 1) } : l));
-    }
-  }, [followups]);
-
-  const handleAddLead = useCallback((stageId?: string) => {
-    const lead = makeNewLead();
-    if (stageId) lead.stage_id = stageId as LeadStageId;
-    setLeads(prev => [lead, ...prev]);
-    setSelectedLeadId(lead.id);
-    setActivities(prev => ({
-      ...prev,
-      [lead.id]: [{
-        id: `act-${Date.now()}`,
-        lead_id: lead.id,
-        organization_id: 'org-1',
-        type: 'lead_created',
-        performed_by_id: 'u-1',
-        performed_by_name: 'Alex Vance',
-        performed_at: new Date().toISOString(),
-      }],
-    }));
-  }, []);
-
-  const handleImportComplete = useCallback((importedLeads: Partial<CrmLead>[]) => {
-    const valid = importedLeads.filter(l => !!l.name) as CrmLead[];
-    setLeads(prev => [...valid, ...prev]);
-    valid.forEach(l => {
-      addActivity(l.id, {
-        id: `act-import-${l.id}`,
-        lead_id: l.id,
-        organization_id: 'org-1',
-        type: 'import_created',
-        performed_by_id: 'u-1',
-        performed_by_name: 'Alex Vance',
-        performed_at: new Date().toISOString(),
-      });
-    });
-  }, [addActivity]);
-
-  // ── Lead detail page ───────────────────────────────────────────────────────
-  if (selectedLead) {
-    return (
-      <LeadDetailPage
-        lead={selectedLead}
-        activities={selectedActivities}
-        calls={calls}
-        followups={followupsMap}
-        onBack={() => setSelectedLeadId(null)}
-        onUpdate={handleLeadUpdate}
-        onRemove={handleLeadRemove}
-        onCallLogged={handleCallLogged}
-        onFollowupCreated={handleFollowupCreated}
-        onNoteAdded={handleNoteAdded}
-      />
+        return updated;
+      })
     );
-  }
+  };
 
-  // ── Main module layout ─────────────────────────────────────────────────────
+  const handleCreateLead = () => {
+    const fresh = makeNewLead();
+    setLeads((prev) => [fresh, ...prev]);
+    setSelectedLeadId(fresh.id);
+  };
+
+  const selectedLead = leads.find((l) => l.id === selectedLeadId) || null;
+
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* ── Module Header ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-6 pt-6 pb-4 border-b border-dark-border/60 bg-dark-bg">
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-5 h-5 text-[#E5A93C]" />
-              <h1 className="text-xl font-bold text-slate-100 font-display">Sales Pipeline</h1>
-            </div>
-            <p className="text-sm text-slate-500">Track leads, manage followups, close more deals.</p>
-          </div>
+    <div className="space-y-6">
+      {/* Top Header & Navigation Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-dark-card border border-dark-border rounded-2xl shadow-sm">
+        <div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<Upload className="w-4 h-4" />}
-              onClick={() => setShowImporter(true)}
-            >
-              Import Leads
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              leftIcon={<Plus className="w-4 h-4" />}
-              onClick={() => handleAddLead()}
-            >
-              Add Lead
-            </Button>
+            <h1 className="text-xl font-black text-slate-100 font-display tracking-tight">Sales Pipeline</h1>
+            <Badge variant="violet" size="sm" className="font-mono font-bold">HubSpot / Zoho Parity</Badge>
           </div>
+          <p className="text-xs text-slate-400 font-mono mt-0.5">
+            Stage-Gated Blueprints • Workflows • Forecasting • Cadences • Scoring
+          </p>
         </div>
 
-        {/* Stats strip */}
-        <div className="flex items-center gap-6 mb-4">
-          <div className="flex items-center gap-1.5 text-sm">
-            <Users className="w-4 h-4 text-slate-500" />
-            <span className="font-mono font-bold text-slate-200">{openLeads.length}</span>
-            <span className="text-slate-500">open leads</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm">
-            <IndianRupee className="w-4 h-4 text-emerald-500" />
-            <span className="font-mono font-bold text-emerald-400">{(totalPipelineValue / 100000).toFixed(1)}L</span>
-            <span className="text-slate-500">pipeline value</span>
-          </div>
-          {overdueFollowups.length > 0 && (
-            <div className="flex items-center gap-1.5 text-sm">
-              <AlertCircle className="w-4 h-4 text-rose-400" />
-              <span className="font-mono font-bold text-rose-400">{overdueFollowups.length}</span>
-              <span className="text-slate-500">overdue followups</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Sub-module View Switcher */}
+          <div className="flex p-1 bg-dark-surface rounded-xl border border-dark-border overflow-x-auto text-xs font-semibold">
+            {[
+              { id: 'kanban', label: 'Kanban', icon: LayoutGrid },
+              { id: 'forecast', label: 'Forecast', icon: TrendingUp },
+              { id: 'workflows', label: 'Workflows', icon: Zap },
+              { id: 'cadences', label: 'Cadences', icon: Mail },
+              { id: 'scoring', label: 'Scoring', icon: Flame },
+              { id: 'scheduling', label: 'Links/Macros', icon: Link2 },
+              { id: 'customizer', label: 'Custom Fields', icon: Sliders },
+            ].map(({ id, label, icon: Icon }) => (
               <button
-                className="text-2xs text-brand-400 hover:text-brand-300 underline underline-offset-2"
-                onClick={() => setView('today')}
+                key={id}
+                onClick={() => setView(id as View)}
+                className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                  view === id
+                    ? 'bg-brand-500 text-dark-bg font-bold shadow-md shadow-brand-500/20'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
               >
-                view
+                <Icon className="w-3.5 h-3.5" />
+                <span>{label}</span>
               </button>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
 
-        {/* View switcher */}
-        <div className="flex items-center gap-1 p-1 bg-dark-surface rounded-xl border border-dark-border/60 w-fit">
-          {([ 
-            { id: 'kanban', icon: LayoutGrid, label: 'Kanban' },
-            { id: 'list', icon: List, label: 'List' },
-            { id: 'today', icon: Calendar, label: 'Today' },
-          ] as const).map(({ id, icon: Icon, label }) => (
-            <button
-              key={id}
-              onClick={() => setView(id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                view === id
-                  ? 'bg-dark-card text-slate-100 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-              {id === 'today' && overdueFollowups.length > 0 && (
-                <span className="ml-0.5 w-4 h-4 rounded-full bg-rose-500 text-white text-2xs font-bold flex items-center justify-center">
-                  {overdueFollowups.length}
-                </span>
-              )}
-            </button>
-          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Upload className="w-3.5 h-3.5" />}
+            onClick={() => setShowImporter(true)}
+          >
+            Import CSV
+          </Button>
+
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+            onClick={handleCreateLead}
+          >
+            New Deal
+          </Button>
         </div>
       </div>
 
-      {/* ── View Content ───────────────────────────────────────────────────── */}
-      <div className="flex-1 min-h-0 overflow-auto px-6 py-5">
-        {view === 'kanban' && (
-          <KanbanBoard
-            stages={PIPELINE_STAGES}
-            leads={leads}
-            onLeadClick={(lead) => setSelectedLeadId(lead.id)}
-            onLeadStageChange={handleLeadStageChange}
-            onAddLeadToStage={handleAddLead}
-          />
-        )}
+      {/* Main Viewport */}
+      {view === 'kanban' && (
+        <KanbanBoard
+          stages={PIPELINE_STAGES}
+          leads={leads}
+          onLeadClick={(lead) => setSelectedLeadId(lead.id)}
+          onLeadStageChange={handleStageChangeRequest}
+          onAddLeadToStage={(stageId) => {
+            const fresh: CrmLead = { ...makeNewLead(), stage: stageId as LeadStageId, stage_id: stageId as LeadStageId };
+            setLeads((prev) => [fresh, ...prev]);
+            setSelectedLeadId(fresh.id);
+          }}
+        />
+      )}
 
-        {view === 'list' && (
-          <LeadListView
-            leads={leads}
-            onLeadClick={(lead) => setSelectedLeadId(lead.id)}
-            onLeadStageChange={handleLeadStageChange}
-            onLeadAssigneeChange={handleLeadAssigneeChange}
-          />
-        )}
+      {view === 'forecast' && (
+        <ForecastDashboard leads={leads} stages={PIPELINE_STAGES} />
+      )}
 
-        {view === 'today' && (
-          <TodayDashboard
-            followups={followups}
-            onLeadClick={(leadId) => setSelectedLeadId(leadId)}
-            onMarkDone={handleMarkFollowupDone}
-            onReschedule={() => {}} // wire FollowupModal for reschedule
-          />
-        )}
-      </div>
+      {view === 'workflows' && <WorkflowBuilder />}
 
-      {/* Importer */}
-      <BulkLeadImporterModal
-        isOpen={showImporter}
-        onClose={() => setShowImporter(false)}
-        onImportComplete={handleImportComplete}
-        organizationId="org-1"
-      />
+      {view === 'cadences' && <SequenceManager />}
+
+      {view === 'scoring' && <LeadScoringManager leads={leads} />}
+
+      {view === 'scheduling' && <SchedulingLinkGenerator />}
+
+      {view === 'customizer' && <CustomFieldManager stages={PIPELINE_STAGES} />}
+
+      {/* Lead Detail Drawer */}
+      {selectedLead && (
+        <LeadDetailPage
+          lead={selectedLead}
+          activities={activities[selectedLead.id] || []}
+          calls={calls}
+          followups={followups.reduce((acc, f) => ({ ...acc, [f.id]: f }), {})}
+          onBack={() => setSelectedLeadId(null)}
+          onUpdate={(updated) => {
+            setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+          }}
+          onRemove={(leadId) => {
+            setLeads((prev) => prev.filter((l) => l.id !== leadId));
+            setSelectedLeadId(null);
+          }}
+          onCallLogged={(call, act) => {
+            if (call.id) setCalls((prev) => ({ ...prev, [call.id]: call }));
+            setActivities((prev) => ({
+              ...prev,
+              [selectedLead.id]: [act, ...(prev[selectedLead.id] || [])],
+            }));
+          }}
+          onFollowupCreated={(followup, act) => {
+            setFollowups((prev) => [followup, ...prev]);
+            setActivities((prev) => ({
+              ...prev,
+              [selectedLead.id]: [act, ...(prev[selectedLead.id] || [])],
+            }));
+          }}
+          onNoteAdded={(_leadId, _note, act) => {
+            setActivities((prev) => ({
+              ...prev,
+              [selectedLead.id]: [act, ...(prev[selectedLead.id] || [])],
+            }));
+          }}
+        />
+      )}
+
+      {/* Stage-Gated Blueprint Validation Modal */}
+      {pendingAdvance && (
+        <BlueprintValidationModal
+          isOpen={blueprintModalOpen}
+          onClose={() => {
+            setBlueprintModalOpen(false);
+            setPendingAdvance(null);
+          }}
+          lead={pendingAdvance.lead}
+          targetStage={pendingAdvance.targetStage}
+          requirement={pendingAdvance.requirement}
+          onConfirmAdvance={(updates) => {
+            executeStageAdvance(pendingAdvance.lead.id, pendingAdvance.targetStage, updates);
+            setPendingAdvance(null);
+          }}
+        />
+      )}
+
+      {/* Bulk Lead Importer */}
+      {showImporter && (
+        <BulkLeadImporterModal
+          isOpen={showImporter}
+          onClose={() => setShowImporter(false)}
+          organizationId="tenant-prod-001"
+          onImportComplete={(imported) => {
+            setLeads((prev) => [...(imported as CrmLead[]), ...prev]);
+            setShowImporter(false);
+          }}
+        />
+      )}
     </div>
   );
 };
-
-// Default export for App.tsx routing
-export default SalesPipelineModule;

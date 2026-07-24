@@ -3,10 +3,26 @@
 // Multi-tenant key scoping ensures ZERO cross-tenant data leaks.
 // ─────────────────────────────────────────────────────────────
 
-const STORAGE_KEYS = {
-  IS_DEMO_MODE: 'vortiq_is_demo_mode',
-  ACTIVE_TENANT_ID: 'vortiq_tenant_id',
-  VERIFIED_USERS: 'vortiq_verified_users_v1',
+// Memory storage fallback for SSR & Node environments
+const memoryStore: Record<string, string> = {};
+
+const safeStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof localStorage !== 'undefined') return localStorage.getItem(key);
+    return memoryStore[key] || null;
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+    else memoryStore[key] = value;
+  },
+  removeItem: (key: string): void => {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+    else delete memoryStore[key];
+  },
+  keys: (): string[] => {
+    if (typeof localStorage !== 'undefined') return Object.keys(localStorage);
+    return Object.keys(memoryStore);
+  },
 };
 
 // Generate Unique Organization Code (e.g. ORG-7482-APX)
@@ -17,11 +33,11 @@ export function generateOrgCode(companyName: string): string {
 }
 
 export function getActiveTenantId(): string {
-  return localStorage.getItem(STORAGE_KEYS.ACTIVE_TENANT_ID) || 'tenant-prod-001';
+  return safeStorage.getItem('vortiq_tenant_id') || 'tenant-prod-001';
 }
 
 export function setActiveTenantId(tenantId: string): void {
-  localStorage.setItem(STORAGE_KEYS.ACTIVE_TENANT_ID, tenantId);
+  safeStorage.setItem('vortiq_tenant_id', tenantId);
 }
 
 // Scopes storage keys strictly by active tenant/org ID
@@ -32,22 +48,22 @@ export function getTenantScopedKey(baseKey: string, tenantId?: string): string {
 
 // Check if tenant has explicitly enabled demo mode
 export function isDemoMode(): boolean {
-  const stored = localStorage.getItem(STORAGE_KEYS.IS_DEMO_MODE);
+  const stored = safeStorage.getItem('vortiq_is_demo_mode');
   return stored === 'true';
 }
 
 export function setDemoMode(isDemo: boolean): void {
-  localStorage.setItem(STORAGE_KEYS.IS_DEMO_MODE, isDemo ? 'true' : 'false');
+  safeStorage.setItem('vortiq_is_demo_mode', isDemo ? 'true' : 'false');
 }
 
 // ── Tenant-Isolated LocalStorage Getter/Setter ────────────────────────────────
 export function getStoredData<T>(baseKey: string, seedData: T[], tenantId?: string): T[] {
   const scopedKey = getTenantScopedKey(baseKey, tenantId);
   try {
-    const raw = localStorage.getItem(scopedKey);
+    const raw = safeStorage.getItem(scopedKey);
     if (!raw) {
       if (isDemoMode()) {
-        localStorage.setItem(scopedKey, JSON.stringify(seedData));
+        safeStorage.setItem(scopedKey, JSON.stringify(seedData));
         return seedData;
       }
       return []; // Return clean empty list for production state
@@ -62,7 +78,7 @@ export function getStoredData<T>(baseKey: string, seedData: T[], tenantId?: stri
 export function saveStoredData<T>(baseKey: string, data: T[], tenantId?: string): void {
   const scopedKey = getTenantScopedKey(baseKey, tenantId);
   try {
-    localStorage.setItem(scopedKey, JSON.stringify(data));
+    safeStorage.setItem(scopedKey, JSON.stringify(data));
   } catch (err) {
     console.error(`Error saving ${scopedKey} to storage:`, err);
   }
@@ -71,9 +87,9 @@ export function saveStoredData<T>(baseKey: string, data: T[], tenantId?: string)
 // ── Clear Current Tenant Workspace Data ──────────────────────────────────────
 export function clearWorkspaceData(tenantId?: string): void {
   const tid = tenantId || getActiveTenantId();
-  Object.keys(localStorage).forEach((key) => {
+  safeStorage.keys().forEach((key) => {
     if (key.endsWith(`_${tid}`)) {
-      localStorage.removeItem(key);
+      safeStorage.removeItem(key);
     }
   });
   setDemoMode(false);
@@ -91,7 +107,7 @@ export interface VerifiedUserAccount {
 
 export function getVerifiedUsers(): VerifiedUserAccount[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.VERIFIED_USERS);
+    const raw = safeStorage.getItem('vortiq_verified_users_v1');
     return raw ? JSON.parse(raw) : [];
   } catch (err) {
     return [];
@@ -101,5 +117,5 @@ export function getVerifiedUsers(): VerifiedUserAccount[] {
 export function saveVerifiedUser(account: VerifiedUserAccount): void {
   const existing = getVerifiedUsers();
   const updated = [...existing.filter((u) => u.email !== account.email), account];
-  localStorage.setItem(STORAGE_KEYS.VERIFIED_USERS, JSON.stringify(updated));
+  safeStorage.setItem('vortiq_verified_users_v1', JSON.stringify(updated));
 }

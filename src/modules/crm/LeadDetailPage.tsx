@@ -13,6 +13,8 @@ import {
 import { ActivityTimeline } from './ActivityTimeline';
 import { CallLogModal } from './CallLogModal';
 import { FollowupModal } from './FollowupModal';
+import { CallTranscriptPlayer } from './CallTranscriptPlayer';
+import { SEED_CALL_TRANSCRIPTS } from './types';
 import {
   ArrowLeft,
   Phone,
@@ -512,6 +514,9 @@ export const LeadDetailPage: React.FC<LeadDetailPageProps> = ({
               </button>
             )}
           </div>
+
+          {/* Call Transcript AI Analysis */}
+          <CallTranscriptPlayer transcript={SEED_CALL_TRANSCRIPTS[0]} />
 
           {/* Timeline */}
           <ActivityTimeline

@@ -120,18 +120,21 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     {stageLeads.length}
                   </span>
                 </div>
-
-                {onAddLeadToStage && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-1 h-7 w-7 text-slate-400 hover:text-slate-100"
-                    onClick={() => onAddLeadToStage(stage.id)}
-                    title={`Add Lead to ${stage.name}`}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  <span className="text-2xs font-mono text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title="Stage Win Probability">
+                    {stage.id === 'new' ? '10%' : stage.id === 'contacted' ? '25%' : stage.id === 'qualified' ? '50%' : stage.id === 'won' ? '100%' : '0%'}
+                  </span>
+                  {onAddLeadToStage && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onAddLeadToStage(stage.id)}
+                      className="p-1 h-6 w-6 text-slate-400 hover:text-slate-200"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Total Value Sub-header */}
