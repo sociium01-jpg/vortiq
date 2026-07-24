@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LandingPage } from '@/pages/LandingPage';
 import { AppLayout } from '@/layouts/AppLayout';
-import { Button } from '@/design-system';
+import { Button, ErrorBoundary } from '@/design-system';
 import { LayoutDashboard } from 'lucide-react';
 
 export default function App() {
@@ -10,7 +10,9 @@ export default function App() {
   if (viewMode === 'landing') {
     return (
       <div className="relative">
-        <LandingPage onNavigateToApp={() => setViewMode('app')} />
+        <ErrorBoundary moduleName="Landing Page">
+          <LandingPage onNavigateToApp={() => setViewMode('app')} />
+        </ErrorBoundary>
       </div>
     );
   }
@@ -34,7 +36,9 @@ export default function App() {
         </Button>
       </div>
 
-      <AppLayout />
+      <ErrorBoundary moduleName="Application Workspace">
+        <AppLayout />
+      </ErrorBoundary>
     </div>
   );
 }

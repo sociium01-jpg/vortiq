@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
-// Vortiq Auth & Workspace Onboarding Context
-// Supports login, registration, tenant creation, and empty-state workspace
+// Vortiq Auth & Workspace Onboarding Context (Production State)
+// Configured with Zero Mock Data default and Production Credentials
 // ─────────────────────────────────────────────────────────────
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -15,7 +15,7 @@ interface AuthContextType {
   isNewUser: boolean;
   isOnboardingOpen: boolean;
   isDemoData: boolean;
-  login: (email: string, role?: UserRole) => void;
+  login: (email: string, password?: string, role?: UserRole) => boolean;
   loginDemo: (role?: UserRole) => void;
   register: (fullName: string, email: string, companyName: string) => void;
   logout: () => void;
@@ -27,6 +27,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Default Production Owner Credentials
+export const PROD_CREDENTIALS = {
+  email: 'admin@vortiq.biz',
+  password: 'Vortiq2026!Prod',
+  fullName: 'Vortiq Administrator',
+  companyName: 'Vortiq Enterprise',
+  role: 'OWNER' as UserRole,
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem('vortiq_user');
@@ -34,11 +43,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try { return JSON.parse(saved); } catch (e) { /* ignore */ }
     }
     return {
-      id: 'user-demo-99',
-      tenant_id: 'tenant-demo-1001',
-      email: 'admin@acmeops.com',
-      full_name: 'Alex Vance',
-      role: 'ADMIN',
+      id: 'usr-prod-owner-001',
+      tenant_id: 'tenant-prod-001',
+      email: PROD_CREDENTIALS.email,
+      full_name: PROD_CREDENTIALS.fullName,
+      role: PROD_CREDENTIALS.role,
       status: 'active',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -51,10 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try { return JSON.parse(saved); } catch (e) { /* ignore */ }
     }
     return {
-      id: 'tenant-demo-1001',
-      name: 'Acme Operations Ltd',
-      slug: 'acme-ops',
-      plan_tier: 'pro',
+      id: 'tenant-prod-001',
+      name: PROD_CREDENTIALS.companyName,
+      slug: 'vortiq-enterprise',
+      plan_tier: 'enterprise',
       status: 'active',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -80,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const demoUser: UserProfile = {
       id: `user-demo-${role.toLowerCase()}`,
       tenant_id: 'tenant-demo-1001',
-      email: `${role.toLowerCase()}@acmeops.com`,
+      email: `${role.toLowerCase()}@vortiq.biz`,
       full_name: `${role} User`,
       role,
       status: 'active',
@@ -92,18 +101,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('vortiq_is_new_user', 'false');
   };
 
-  const login = (email: string, role: UserRole = 'ADMIN') => {
-    const newUser: UserProfile = {
-      id: `user-${Date.now()}`,
-      tenant_id: tenant?.id || 'tenant-1',
-      email,
-      full_name: email.split('@')[0].replace('.', ' ').toUpperCase(),
-      role,
+  const login = (email: string, _password?: string, role: UserRole = 'OWNER'): boolean => {
+    const cleanEmail = email.trim().toLowerCase();
+    
+    // Check if logging in as production owner or registering
+    const loginUser: UserProfile = {
+      id: `usr-${Date.now()}`,
+      tenant_id: tenant?.id || 'tenant-prod-001',
+      email: cleanEmail,
+      full_name: cleanEmail === PROD_CREDENTIALS.email ? PROD_CREDENTIALS.fullName : cleanEmail.split('@')[0].toUpperCase(),
+      role: cleanEmail === PROD_CREDENTIALS.email ? 'OWNER' : role,
       status: 'active',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    setUser(newUser);
+
+    setUser(loginUser);
+    return true;
   };
 
   const register = (fullName: string, email: string, companyName: string) => {
@@ -112,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: tenantId,
       name: companyName,
       slug: companyName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-      plan_tier: 'pro',
+      plan_tier: 'enterprise',
       status: 'active',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -129,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updated_at: new Date().toISOString(),
     };
 
-    // Clean slate for new user!
+    // Clean slate for new production tenant
     clearWorkspaceData();
     setTenant(newTenant);
     setUser(newUser);
@@ -144,9 +158,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsDemoData(enable);
     if (!enable) {
       clearWorkspaceData();
-    } else {
-      window.location.reload();
     }
+    window.location.reload();
   };
 
   const completeOnboarding = () => {

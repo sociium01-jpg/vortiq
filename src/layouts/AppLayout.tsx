@@ -15,6 +15,7 @@ import {
   Select,
   Avatar,
   CommandPalette,
+  ErrorBoundary,
 } from '@/design-system';
 import {
   Users,
@@ -260,14 +261,16 @@ export const AppLayout: React.FC = () => {
 
       {/* Active Module Viewport */}
       <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
-        {activeTab === 'crm' && <SalesPipelineModule />}
-        {activeTab === 'finance' && <FinanceModule />}
-        {activeTab === 'hr' && <HRModule />}
-        {activeTab === 'marketing' && <MarketingModule />}
-        {activeTab === 'tasks' && <TaskModule />}
-        {activeTab === 'inventory' && <InventoryModule />}
-        {activeTab === 'admin' && <AdminModule />}
-        {activeTab === 'notifications' && <NotificationsModule />}
+        <ErrorBoundary moduleName={`${activeTab.toUpperCase()} Module`}>
+          {activeTab === 'crm' && <SalesPipelineModule />}
+          {activeTab === 'finance' && <FinanceModule />}
+          {activeTab === 'hr' && <HRModule />}
+          {activeTab === 'marketing' && <MarketingModule />}
+          {activeTab === 'tasks' && <TaskModule />}
+          {activeTab === 'inventory' && <InventoryModule />}
+          {activeTab === 'admin' && <AdminModule />}
+          {activeTab === 'notifications' && <NotificationsModule />}
+        </ErrorBoundary>
       </main>
 
       {/* Slide-over Notification Drawer */}

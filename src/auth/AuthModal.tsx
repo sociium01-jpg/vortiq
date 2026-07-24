@@ -90,13 +90,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         {/* Form: Login */}
         {mode === 'login' && (
           <form onSubmit={handleLoginSubmit} className="space-y-4">
+            {/* Quick Fill Production Credentials Banner */}
+            <div className="p-3 bg-brand-500/10 border border-brand-500/30 rounded-xl space-y-1.5">
+              <div className="flex items-center justify-between text-2xs font-semibold">
+                <span className="text-brand-400 font-mono font-bold uppercase tracking-wider">Production Account Credentials</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@vortiq.biz');
+                    setPassword('Vortiq2026!Prod');
+                  }}
+                  className="text-brand-400 hover:text-brand-300 underline font-sans font-normal"
+                >
+                  Quick Auto-Fill
+                </button>
+              </div>
+              <div className="text-2xs font-mono text-slate-300 space-y-0.5">
+                <p>Email: <span className="text-slate-100 font-bold">admin@vortiq.biz</span></p>
+                <p>Password: <span className="text-slate-100 font-bold">Vortiq2026!Prod</span></p>
+              </div>
+            </div>
+
             <div>
               <label className="text-2xs font-semibold text-slate-300 uppercase tracking-wider mb-1 block">
                 Work Email
               </label>
               <Input
                 type="email"
-                placeholder="you@company.com"
+                placeholder="admin@vortiq.biz"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -115,7 +136,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <Button variant="primary" size="md" className="w-full" type="submit" leftIcon={<LogIn className="w-4 h-4" />}>
-              Sign In to Workspace
+              Sign In to Production Workspace
             </Button>
           </form>
         )}

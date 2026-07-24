@@ -15,3 +15,4 @@ export * from './primitives/CommandPalette';
 export * from './primitives/EmptyState';
 export * from './primitives/LoadingSkeleton';
 export * from './primitives/Toast';
+export * from './primitives/ErrorBoundary';
