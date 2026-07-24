@@ -9,12 +9,12 @@ import { TdsRecord, formatINR } from './types';
 import { ShieldCheck, Plus, CheckCircle, Clock } from 'lucide-react';
 
 export interface TdsLedgerProps {
-  tdsRecords: TdsRecord[];
-  onUpdateTdsRecord: (updatedRecord: TdsRecord) => void;
+  tdsRecords?: TdsRecord[];
+  onUpdateTdsRecord?: (updatedRecord: TdsRecord) => void;
 }
 
 export const TdsLedger: React.FC<TdsLedgerProps> = ({
-  tdsRecords,
+  tdsRecords = [],
   onUpdateTdsRecord,
 }) => {
   const [selectedSection, setSelectedSection] = useState<string>('ALL');
@@ -55,7 +55,7 @@ export const TdsLedger: React.FC<TdsLedgerProps> = ({
       challan_number: challanNumber.trim(),
       deposit_date: depositDate,
     };
-    onUpdateTdsRecord(updated);
+    onUpdateTdsRecord?.(updated);
     setDepositModalOpen(false);
   };
 
