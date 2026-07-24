@@ -1,7 +1,7 @@
 // Local Admin Types extending global DB schema & HubSpot/Zoho Admin Parity
 import { Tenant, TenantSubscription, UserProfile, PlanTier } from '@/types';
 
-export type AdminTab = 'overview' | 'users' | 'custom_roles' | 'api_keys' | 'data_export' | 'notifications';
+export type AdminTab = 'profile' | 'users' | 'custom_roles' | 'api_keys' | 'data_export' | 'notifications';
 
 export interface AdminTenant extends Tenant {
   active_users_count: number;

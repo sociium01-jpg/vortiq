@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 export const AdminModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<AdminTab>('profile' as any);
+  const [activeTab, setActiveTab] = useState<AdminTab>('profile');
   const [adminAuditLogs, setAdminAuditLogs] = useState<AdminAuditLog[]>(SEED_ADMIN_AUDIT_LOGS);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
@@ -107,9 +107,9 @@ export const AdminModule: React.FC = () => {
         </div>
 
         {/* Main Viewport */}
-        {activeTab === ('profile' as any) && <OrgProfileManager />}
+        {activeTab === 'profile' && <OrgProfileManager />}
 
-        {activeTab === ('users' as any) && <UserRbacManager />}
+        {activeTab === 'users' && <UserRbacManager />}
 
         {activeTab === 'custom_roles' && <CustomRoleManager onRoleCreated={handleRoleCreated} />}
 

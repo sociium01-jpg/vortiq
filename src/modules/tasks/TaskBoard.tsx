@@ -147,11 +147,11 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
                     <div className="flex items-center justify-between pt-1 border-t border-dark-border/40 text-xs">
                       <div className="flex items-center gap-2">
                         <Avatar
-                          name={task.assignee || 'Unassigned'}
+                          name={task.assignee_name || task.assignee || 'Unassigned'}
                           size="sm"
                         />
                         <span className="text-[11px] text-slate-400 truncate max-w-[90px]">
-                          {task.assignee || 'Unassigned'}
+                          {task.assignee_name || task.assignee || 'Unassigned'}
                         </span>
                       </div>
 
