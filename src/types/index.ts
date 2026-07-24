@@ -6,6 +6,7 @@ export type PlanTier = 'starter' | 'pro' | 'enterprise';
 
 export interface Tenant {
   id: string;
+  org_code: string;
   name: string;
   slug: string;
   domain?: string;

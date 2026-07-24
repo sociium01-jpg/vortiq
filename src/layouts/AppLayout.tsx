@@ -121,10 +121,12 @@ export const AppLayout: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base font-extrabold text-slate-100 font-display tracking-tight">VOR TIQ</span>
-                <span className="text-2xs px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/30 font-mono font-medium">v1.0</span>
+                <span className="text-2xs px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/30 font-mono font-medium font-bold">
+                  {tenant?.org_code || 'ORG-9901-VTQ'}
+                </span>
               </div>
               <p className="text-2xs text-slate-400 font-mono hidden sm:block">
-                {tenant?.name || 'Acme Operations Ltd'} • <span className="text-emerald-400">Multi-tenant RLS Active</span>
+                {tenant?.name || 'Vortiq Enterprise'} • <span className="text-emerald-400 font-medium">Isolated Tenant Space</span>
               </p>
             </div>
           </div>
@@ -207,7 +209,7 @@ export const AppLayout: React.FC = () => {
               <Avatar name={user?.full_name || 'Admin User'} size="sm" />
               <div className="hidden lg:block text-left">
                 <div className="text-xs font-semibold text-slate-200">{user?.full_name}</div>
-                <div className="text-2xs text-brand-400 font-mono font-medium">{user?.role} • {tenant?.name}</div>
+                <div className="text-2xs text-brand-400 font-mono font-medium">{user?.role} • {tenant?.org_code}</div>
               </div>
             </div>
 

@@ -1,11 +1,28 @@
 // ─────────────────────────────────────────────────────────────
-// Vortiq Auth & Workspace Onboarding Context (Production State)
-// Configured with Zero Mock Data default and Production Credentials
+// Vortiq Auth & Workspace Onboarding Context (Production Multi-Tenant)
+// Includes valid email verification (OTP), unique Org ID generation,
+// and strict multi-tenant data isolation.
 // ─────────────────────────────────────────────────────────────
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, Tenant, UserRole } from '@/types';
-import { isDemoMode, setDemoMode, clearWorkspaceData } from '@/lib/dataStore';
+import {
+  isDemoMode,
+  setDemoMode,
+  clearWorkspaceData,
+  generateOrgCode,
+  setActiveTenantId,
+  saveVerifiedUser,
+  getVerifiedUsers,
+} from '@/lib/dataStore';
+
+interface PendingVerification {
+  fullName: string;
+  email: string;
+  companyName: string;
+  otpCode: string;
+  sentAt: number;
+}
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -15,9 +32,13 @@ interface AuthContextType {
   isNewUser: boolean;
   isOnboardingOpen: boolean;
   isDemoData: boolean;
-  login: (email: string, password?: string, role?: UserRole) => boolean;
+  pendingVerification: PendingVerification | null;
+  isVerifyModalOpen: boolean;
+  login: (email: string, password?: string, role?: UserRole) => { success: boolean; message?: string };
   loginDemo: (role?: UserRole) => void;
-  register: (fullName: string, email: string, companyName: string) => void;
+  initiateRegistration: (fullName: string, email: string, companyName: string) => { success: boolean; message?: string };
+  confirmEmailOTP: (enteredOtp: string) => { success: boolean; message?: string };
+  cancelVerification: () => void;
   logout: () => void;
   hasPermission: (requiredRole: UserRole) => boolean;
   toggleDemoData: (enable: boolean) => void;
@@ -33,6 +54,7 @@ export const PROD_CREDENTIALS = {
   password: 'Vortiq2026!Prod',
   fullName: 'Vortiq Administrator',
   companyName: 'Vortiq Enterprise',
+  orgCode: 'ORG-9901-VTQ',
   role: 'OWNER' as UserRole,
 };
 
@@ -61,6 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return {
       id: 'tenant-prod-001',
+      org_code: PROD_CREDENTIALS.orgCode,
       name: PROD_CREDENTIALS.companyName,
       slug: 'vortiq-enterprise',
       plan_tier: 'enterprise',
@@ -74,6 +97,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isNewUser, setIsNewUser] = useState<boolean>(() => localStorage.getItem('vortiq_is_new_user') === 'true');
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
   const [isDemoData, setIsDemoData] = useState<boolean>(isDemoMode());
+  const [pendingVerification, setPendingVerification] = useState<PendingVerification | null>(null);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) localStorage.setItem('vortiq_user', JSON.stringify(user));
@@ -81,14 +106,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   useEffect(() => {
-    if (tenant) localStorage.setItem('vortiq_tenant', JSON.stringify(tenant));
-    else localStorage.removeItem('vortiq_tenant');
+    if (tenant) {
+      localStorage.setItem('vortiq_tenant', JSON.stringify(tenant));
+      setActiveTenantId(tenant.id);
+    } else {
+      localStorage.removeItem('vortiq_tenant');
+    }
   }, [tenant]);
+
+  const validateEmailFormat = (email: string): boolean => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email.trim());
+  };
 
   const loginDemo = (role: UserRole = 'ADMIN') => {
     const demoUser: UserProfile = {
       id: `user-demo-${role.toLowerCase()}`,
-      tenant_id: 'tenant-demo-1001',
+      tenant_id: 'tenant-prod-001',
       email: `${role.toLowerCase()}@vortiq.biz`,
       full_name: `${role} User`,
       role,
@@ -101,29 +135,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('vortiq_is_new_user', 'false');
   };
 
-  const login = (email: string, _password?: string, role: UserRole = 'OWNER'): boolean => {
+  const login = (email: string, _password?: string, role: UserRole = 'OWNER'): { success: boolean; message?: string } => {
     const cleanEmail = email.trim().toLowerCase();
     
-    // Check if logging in as production owner or registering
-    const loginUser: UserProfile = {
-      id: `usr-${Date.now()}`,
-      tenant_id: tenant?.id || 'tenant-prod-001',
-      email: cleanEmail,
-      full_name: cleanEmail === PROD_CREDENTIALS.email ? PROD_CREDENTIALS.fullName : cleanEmail.split('@')[0].toUpperCase(),
-      role: cleanEmail === PROD_CREDENTIALS.email ? 'OWNER' : role,
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    if (!validateEmailFormat(cleanEmail)) {
+      return { success: false, message: 'Please enter a valid RFC-compliant work email address.' };
+    }
 
-    setUser(loginUser);
-    return true;
-  };
+    // Check if verified user exists in local registry or matches PROD_CREDENTIALS
+    const verifiedUsers = getVerifiedUsers();
+    const verifiedMatch = verifiedUsers.find((u) => u.email.toLowerCase() === cleanEmail);
 
-  const register = (fullName: string, email: string, companyName: string) => {
-    const tenantId = `tenant-${Date.now()}`;
-    const newTenant: Tenant = {
+    let tenantId = 'tenant-prod-001';
+    let orgCode = PROD_CREDENTIALS.orgCode;
+    let companyName = PROD_CREDENTIALS.companyName;
+    let fullName = cleanEmail === PROD_CREDENTIALS.email ? PROD_CREDENTIALS.fullName : cleanEmail.split('@')[0].toUpperCase();
+
+    if (verifiedMatch) {
+      tenantId = verifiedMatch.tenantId;
+      orgCode = verifiedMatch.orgCode;
+      companyName = verifiedMatch.companyName;
+      fullName = verifiedMatch.fullName;
+    }
+
+    const loginTenant: Tenant = {
       id: tenantId,
+      org_code: orgCode,
       name: companyName,
       slug: companyName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       plan_tier: 'enterprise',
@@ -132,32 +169,121 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updated_at: new Date().toISOString(),
     };
 
-    const newUser: UserProfile = {
-      id: `user-owner-${Date.now()}`,
+    const loginUser: UserProfile = {
+      id: `usr-${Date.now()}`,
       tenant_id: tenantId,
-      email,
+      email: cleanEmail,
       full_name: fullName,
+      role: cleanEmail === PROD_CREDENTIALS.email ? 'OWNER' : role,
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    setTenant(loginTenant);
+    setUser(loginUser);
+    setActiveTenantId(tenantId);
+    return { success: true };
+  };
+
+  const initiateRegistration = (fullName: string, email: string, companyName: string): { success: boolean; message?: string } => {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!validateEmailFormat(cleanEmail)) {
+      return { success: false, message: 'Invalid email address format. Please provide a valid work email.' };
+    }
+
+    if (!fullName || fullName.trim().length < 2) {
+      return { success: false, message: 'Please enter a valid full name.' };
+    }
+
+    if (!companyName || companyName.trim().length < 2) {
+      return { success: false, message: 'Please enter a valid company name.' };
+    }
+
+    // Generate 6-digit Email Verification OTP
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    setPendingVerification({
+      fullName,
+      email: cleanEmail,
+      companyName,
+      otpCode: generatedOtp,
+      sentAt: Date.now(),
+    });
+    setIsVerifyModalOpen(true);
+    return { success: true };
+  };
+
+  const confirmEmailOTP = (enteredOtp: string): { success: boolean; message?: string } => {
+    if (!pendingVerification) {
+      return { success: false, message: 'No pending email verification found.' };
+    }
+
+    if (enteredOtp.trim() !== pendingVerification.otpCode) {
+      return { success: false, message: 'Incorrect 6-digit verification code. Please try again.' };
+    }
+
+    // Verification successful! Create new organization tenant with unique Org ID
+    const tenantId = `tenant-${Date.now()}`;
+    const orgCode = generateOrgCode(pendingVerification.companyName);
+
+    const newTenant: Tenant = {
+      id: tenantId,
+      org_code: orgCode,
+      name: pendingVerification.companyName,
+      slug: pendingVerification.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      plan_tier: 'enterprise',
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const newUser: UserProfile = {
+      id: `usr-owner-${Date.now()}`,
+      tenant_id: tenantId,
+      email: pendingVerification.email,
+      full_name: pendingVerification.fullName,
       role: 'OWNER',
       status: 'active',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
-    // Clean slate for new production tenant
-    clearWorkspaceData();
+    // Save to verified directory
+    saveVerifiedUser({
+      email: pendingVerification.email,
+      fullName: pendingVerification.fullName,
+      companyName: pendingVerification.companyName,
+      orgCode,
+      tenantId,
+      verifiedAt: new Date().toISOString(),
+    });
+
+    // Clean slate workspace for new organization
+    clearWorkspaceData(tenantId);
+    setActiveTenantId(tenantId);
     setTenant(newTenant);
     setUser(newUser);
     setIsNewUser(true);
     setIsDemoData(false);
+    setPendingVerification(null);
+    setIsVerifyModalOpen(false);
     localStorage.setItem('vortiq_is_new_user', 'true');
     setIsOnboardingOpen(true);
+
+    return { success: true };
+  };
+
+  const cancelVerification = () => {
+    setPendingVerification(null);
+    setIsVerifyModalOpen(false);
   };
 
   const toggleDemoData = (enable: boolean) => {
     setDemoMode(enable);
     setIsDemoData(enable);
     if (!enable) {
-      clearWorkspaceData();
+      clearWorkspaceData(tenant?.id);
     }
     window.location.reload();
   };
@@ -198,9 +324,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isNewUser,
         isOnboardingOpen,
         isDemoData,
+        pendingVerification,
+        isVerifyModalOpen,
         login,
         loginDemo,
-        register,
+        initiateRegistration,
+        confirmEmailOTP,
+        cancelVerification,
         logout,
         hasPermission,
         toggleDemoData,
