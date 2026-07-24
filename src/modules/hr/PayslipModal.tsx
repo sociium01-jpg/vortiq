@@ -79,8 +79,8 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
   // Reset state when employee changes
   useEffect(() => {
     if (employee) {
-      // Default estimated monthly TDS: 5% of gross if gross > 50,000 INR
-      const defaultTds = employee.gross_salary_paise > 5000000 ? Math.round(employee.gross_salary_paise * 0.05) : 0;
+      const grossP = employee.gross_salary_paise || (employee.ctc_annual || 0) * 100 / 12;
+      const defaultTds = grossP > 5000000 ? Math.round(grossP * 0.05) : 0;
       setCustomTdsPaise(defaultTds);
       setIsDisbursed(false);
     }
@@ -403,7 +403,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
             </div>
             <div className="text-right">
               <span className="text-2xl font-black font-mono text-brand-400 tracking-tight">
-                {formatPaiseToRupees(netSalaryPaise, true)}
+                {formatPaiseToRupees(netSalaryPaise)}
               </span>
               <span className="text-2xs text-slate-400 block font-mono">
                 Direct Transfer to {employee.bank_name || 'Bank Account'}

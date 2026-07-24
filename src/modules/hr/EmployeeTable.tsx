@@ -48,15 +48,16 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
 
   // Filtering
   const filteredEmployees = employees.filter((emp) => {
+    const code = emp.employee_code || 'EMP-001';
     const matchesSearch =
       emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.employee_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.email.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesDept = departmentFilter === 'ALL' || emp.department === departmentFilter;
-    const matchesType = employmentTypeFilter === 'ALL' || emp.employment_type === employmentTypeFilter;
-    const matchesStatus = statusFilter === 'ALL' || emp.status === statusFilter;
+    const matchesType = employmentTypeFilter === 'ALL' || (emp.employment_type || 'full_time') === employmentTypeFilter;
+    const matchesStatus = statusFilter === 'ALL' || (emp.status || 'active') === statusFilter;
 
     return matchesSearch && matchesDept && matchesType && matchesStatus;
   });
@@ -226,19 +227,19 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                   {/* Type & Status */}
                   <td className="py-3 px-3">
                     <div className="flex flex-col gap-1 items-start">
-                      {getStatusBadge(emp.status)}
-                      {getTypeBadge(emp.employment_type)}
+                      {getStatusBadge(emp.status || 'active')}
+                      {getTypeBadge(emp.employment_type || 'full_time')}
                     </div>
                   </td>
 
                   {/* Basic Salary - Right-aligned & font-mono */}
                   <td className="py-3 px-3 text-right font-mono font-medium text-slate-200">
-                    {formatPaiseToRupees(emp.basic_salary_paise)}
+                    {formatPaiseToRupees(emp.basic_salary_paise || (emp.basic_monthly || 0) * 100)}
                   </td>
 
                   {/* Gross Salary - Right-aligned & font-mono */}
                   <td className="py-3 px-3 text-right font-mono font-semibold text-emerald-400">
-                    {formatPaiseToRupees(emp.gross_salary_paise)}
+                    {formatPaiseToRupees(emp.gross_salary_paise || (emp.ctc_annual || 0) * 100 / 12)}
                   </td>
 
                   {/* PAN Card with Click-to-reveal */}

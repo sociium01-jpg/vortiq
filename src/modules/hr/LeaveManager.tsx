@@ -25,22 +25,42 @@ import {
 } from 'lucide-react';
 
 export interface LeaveManagerProps {
-  leaveRequests: LeaveRequestWithUser[];
-  leaveBalances: LeaveBalance[];
-  employees: EmployeeWithUser[];
-  onApproveRequest: (requestId: string) => void;
-  onRejectRequest: (requestId: string) => void;
-  onCreateLeaveRequest: (newRequest: Partial<LeaveRequestWithUser>) => void;
+  leaveRequests?: LeaveRequestWithUser[];
+  leaveBalances?: LeaveBalance[];
+  employees?: EmployeeWithUser[];
+  onApproveRequest?: (requestId: string) => void;
+  onRejectRequest?: (requestId: string) => void;
+  onCreateLeaveRequest?: (newRequest: Partial<LeaveRequestWithUser>) => void;
 }
 
 export const LeaveManager: React.FC<LeaveManagerProps> = ({
-  leaveRequests,
-  leaveBalances,
-  employees,
+  leaveRequests = [],
+  leaveBalances = [],
+  employees = [],
   onApproveRequest,
   onRejectRequest,
   onCreateLeaveRequest,
 }) => {
+  const [requestsList, setRequestsList] = useState<LeaveRequestWithUser[]>(
+    leaveRequests.length > 0
+      ? leaveRequests
+      : [
+          {
+            id: 'lr-101',
+            tenant_id: 'tenant-prod-001',
+            employee_id: 'u-2',
+            employee_name: 'Priya Sharma',
+            department: 'Product Management',
+            leave_type: 'casual',
+            start_date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
+            end_date: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
+            days_count: 2,
+            reason: 'Personal family event',
+            status: 'pending',
+            created_at: new Date().toISOString(),
+          },
+        ]
+  );
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
@@ -65,17 +85,19 @@ export const LeaveManager: React.FC<LeaveManagerProps> = ({
   const daysCount = calculateDays(fromDate, toDate);
 
   // Overall statistics
-  const pendingCount = leaveRequests.filter((r) => r.status === 'pending').length;
-  const approvedCount = leaveRequests.filter((r) => r.status === 'approved').length;
-  const rejectedCount = leaveRequests.filter((r) => r.status === 'rejected').length;
+  const activeList = requestsList;
+  const pendingCount = activeList.filter((r) => r.status === 'pending').length;
+  const approvedCount = activeList.filter((r) => r.status === 'approved').length;
+  const rejectedCount = activeList.filter((r) => r.status === 'rejected').length;
 
   // Filter requests
-  const filteredRequests = leaveRequests.filter((req) => {
+  const filteredRequests = activeList.filter((req) => {
+    const code = req.employee_code || 'EMP-001';
     const matchesStatus = statusFilter === 'all' || req.status === statusFilter;
     const matchesSearch =
       req.employee_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       req.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.employee_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (req.reason && req.reason.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesStatus && matchesSearch;
   });
@@ -119,21 +141,25 @@ export const LeaveManager: React.FC<LeaveManagerProps> = ({
   const handleApplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const emp = employees.find((e) => e.user_id === selectedEmployeeUserId) || employees[0];
-    if (!emp) return;
 
-    onCreateLeaveRequest({
-      employee_user_id: emp.user_id,
-      employee_name: emp.full_name,
-      employee_code: emp.employee_code,
-      department: emp.department,
-      avatar_url: emp.avatar_url,
+    const newReq: LeaveRequestWithUser = {
+      id: `lr-${Date.now()}`,
+      tenant_id: 'tenant-prod-001',
+      employee_id: emp?.user_id || 'u-1',
+      employee_name: emp?.full_name || 'Team Member',
+      employee_code: emp?.employee_code || 'EMP-001',
+      department: emp?.department || 'Engineering',
       leave_type: leaveType,
-      from_date: fromDate,
-      to_date: toDate,
+      start_date: fromDate,
+      end_date: toDate,
       days_count: daysCount,
       reason,
       status: 'pending',
-    });
+      created_at: new Date().toISOString(),
+    };
+
+    setRequestsList([newReq, ...requestsList]);
+    onCreateLeaveRequest?.(newReq);
 
     setIsApplyModalOpen(false);
     setReason('');
@@ -380,16 +406,22 @@ export const LeaveManager: React.FC<LeaveManagerProps> = ({
                           variant="primary"
                           size="sm"
                           leftIcon={<Check className="w-3.5 h-3.5" />}
-                          onClick={() => onApproveRequest(req.id)}
+                          onClick={() => {
+                            setRequestsList((prev) => prev.map((r) => (r.id === req.id ? { ...r, status: 'approved' } : r)));
+                            onApproveRequest?.(req.id);
+                          }}
                           className="bg-emerald-600 hover:bg-emerald-700 text-white text-2xs py-1 px-2.5"
                         >
                           Approve
                         </Button>
                         <Button
-                          variant="danger"
+                          variant="secondary"
                           size="sm"
-                          leftIcon={<X className="w-3.5 h-3.5" />}
-                          onClick={() => onRejectRequest(req.id)}
+                          leftIcon={<X className="w-3.5 h-3.5 text-rose-400" />}
+                          onClick={() => {
+                            setRequestsList((prev) => prev.map((r) => (r.id === req.id ? { ...r, status: 'rejected' } : r)));
+                            onRejectRequest?.(req.id);
+                          }}
                           className="text-2xs py-1 px-2.5"
                         >
                           Reject
