@@ -226,7 +226,7 @@ export const DocsSpaceModule: React.FC<DocsSpaceModuleProps> = ({ tasks }) => {
             <Modal
               isOpen={showHistoryModal}
               onClose={() => setShowHistoryModal(false)}
-              title="Confluence Revision History Timeline"
+              title="Documentation Revision History Timeline"
               maxWidth="md"
             >
               <div className="space-y-4">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
+import { DashboardModule } from '@/modules/dashboard/DashboardModule';
 import { SalesPipelineModule } from '@/modules/crm/SalesPipelineModule';
 import { FinanceModule } from '@/modules/finance/FinanceModule';
 import { HRModule } from '@/modules/hr/HRModule';
@@ -13,7 +14,6 @@ import { NotificationDrawer } from '@/modules/notifications/NotificationDrawer';
 import { AppNotification } from '@/types';
 import {
   Button,
-  Select,
   Avatar,
   CommandPalette,
   ErrorBoundary,
@@ -30,17 +30,19 @@ import {
   Layers,
   ChevronRight,
   IndianRupee,
-  LogIn,
   Database,
+  LayoutDashboard,
+  LogOut,
+  Globe,
 } from 'lucide-react';
 import { AuthModal } from '@/auth/AuthModal';
 import { OnboardingWizardModal } from '@/auth/OnboardingWizardModal';
 
-export type ModuleTab = 'crm' | 'finance' | 'hr' | 'marketing' | 'tasks' | 'inventory' | 'vault' | 'admin' | 'notifications';
+export type ModuleTab = 'dashboard' | 'crm' | 'finance' | 'hr' | 'marketing' | 'tasks' | 'inventory' | 'vault' | 'admin' | 'notifications';
 
 export const AppLayout: React.FC = () => {
-  const { user, tenant, loginDemo, isOnboardingOpen, setIsOnboardingOpen } = useAuth();
-  const [activeTab, setActiveTab] = useState<ModuleTab>('crm');
+  const { user, tenant, logout, isOnboardingOpen, setIsOnboardingOpen } = useAuth();
+  const [activeTab, setActiveTab] = useState<ModuleTab>('dashboard');
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -69,17 +71,6 @@ export const AppLayout: React.FC = () => {
       read: false,
       created_at: new Date(Date.now() - 3600000).toISOString(),
     },
-    {
-      id: 'notif-3',
-      tenant_id: tenant?.id || 't-1',
-      user_id: user?.id || 'u-1',
-      title: 'Razorpay Auto-Renewal Succeeded',
-      message: 'Pro Plan invoice ₹24,999 processed successfully.',
-      type: 'success',
-      channel: 'in_app',
-      read: true,
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
   ]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -100,15 +91,16 @@ export const AppLayout: React.FC = () => {
   };
 
   const navItems: { id: ModuleTab; label: string; icon: React.ReactNode; badge?: string }[] = [
-    { id: 'crm', label: 'CRM Pipeline', icon: <Users className="w-4 h-4" /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'crm', label: 'Sales / Leads Pipeline', icon: <Users className="w-4 h-4" /> },
     { id: 'finance', label: 'Finance & Tax', icon: <IndianRupee className="w-4 h-4" /> },
     { id: 'hr', label: 'HR & Payroll', icon: <UserCheck className="w-4 h-4" /> },
     { id: 'marketing', label: 'Marketing & Data', icon: <Megaphone className="w-4 h-4" /> },
     { id: 'tasks', label: 'Tasks & Docs', icon: <CheckSquare className="w-4 h-4" /> },
     { id: 'inventory', label: 'Inventory & Floor', icon: <Package className="w-4 h-4" />, badge: 'Alert' },
     { id: 'vault', label: 'Data Vault', icon: <Database className="w-4 h-4 text-emerald-400" /> },
-    { id: 'admin', label: 'Admin & Billing', icon: <Shield className="w-4 h-4" /> },
-    { id: 'notifications', label: 'Notifications Center', icon: <Bell className="w-4 h-4" />, badge: unreadCount > 0 ? `${unreadCount}` : undefined },
+    { id: 'admin', label: 'Admin Settings', icon: <Shield className="w-4 h-4" /> },
+    { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" />, badge: unreadCount > 0 ? `${unreadCount}` : undefined },
   ];
 
   return (
@@ -117,14 +109,14 @@ export const AppLayout: React.FC = () => {
       <header className="sticky top-0 z-40 bg-dark-card/95 backdrop-blur-md border-b border-dark-border px-4 lg:px-6 py-2.5 flex items-center justify-between shadow-md">
         {/* Brand & Workspace */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('crm')}>
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-brand-400 flex items-center justify-center shadow-lg shadow-brand-500/20 text-dark-bg font-black text-xl tracking-wider font-display">
               V
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base font-extrabold text-slate-100 font-display tracking-tight">VOR TIQ</span>
-                <span className="text-2xs px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/30 font-mono font-medium font-bold">
+                <span className="text-2xs px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/30 font-mono font-bold">
                   {tenant?.org_code || 'ORG-9901-VTQ'}
                 </span>
               </div>
@@ -136,7 +128,7 @@ export const AppLayout: React.FC = () => {
         </div>
 
         {/* Global Module Navigation Pills (Desktop) */}
-        <nav className="hidden md:flex items-center gap-1 bg-dark-surface/60 p-1 rounded-xl border border-dark-border/80">
+        <nav className="hidden lg:flex items-center gap-1 bg-dark-surface/60 p-1 rounded-xl border border-dark-border/80">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
@@ -167,8 +159,8 @@ export const AppLayout: React.FC = () => {
           })}
         </nav>
 
-        {/* Global Controls & User Profile */}
-        <div className="flex items-center gap-3">
+        {/* Global Controls & In-App User Actions */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Quick Command Palette */}
           <Button
             variant="outline"
@@ -178,6 +170,19 @@ export const AppLayout: React.FC = () => {
             className="hidden sm:inline-flex text-xs"
           >
             <kbd className="text-2xs font-mono bg-dark-surface px-1 py-0.5 rounded border border-dark-border">Ctrl+K</kbd>
+          </Button>
+
+          {/* Back to Website Link */}
+          <Button
+            variant="ghost"
+            size="sm"
+            leftIcon={<Globe className="w-3.5 h-3.5 text-brand-400" />}
+            onClick={() => {
+              window.location.href = '/';
+            }}
+            className="hidden xl:flex text-xs text-slate-300 hover:text-white"
+          >
+            Back to Website
           </Button>
 
           {/* Quick Notification Bell */}
@@ -194,79 +199,49 @@ export const AppLayout: React.FC = () => {
             )}
           </button>
 
-          <div className="h-6 w-px bg-dark-border" />
+          <div className="h-6 w-px bg-dark-border hidden sm:block" />
 
-          {/* Account Login / Setup & Profile */}
+          {/* User Profile & Sign Out */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<LogIn className="w-3.5 h-3.5" />}
-              onClick={() => setIsAuthModalOpen(true)}
-              className="hidden sm:flex"
-            >
-              Sign In / Setup
-            </Button>
-
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsAuthModalOpen(true)}>
+            <div className="flex items-center gap-2">
               <Avatar name={user?.full_name || 'Admin User'} size="sm" />
-              <div className="hidden lg:block text-left">
+              <div className="hidden xl:block text-left font-mono">
                 <div className="text-xs font-semibold text-slate-200">{user?.full_name}</div>
-                <div className="text-2xs text-brand-400 font-mono font-medium">{user?.role} • {tenant?.org_code}</div>
+                <div className="text-2xs text-brand-400 font-medium">{user?.role} • {tenant?.org_code}</div>
               </div>
             </div>
 
-            <Select
-              options={[
-                { value: 'OWNER', label: 'OWNER' },
-                { value: 'ADMIN', label: 'ADMIN' },
-                { value: 'HR_ADMIN', label: 'HR_ADMIN' },
-                { value: 'FINANCE_ADMIN', label: 'FINANCE_ADMIN' },
-                { value: 'MANAGER', label: 'MANAGER' },
-                { value: 'MEMBER', label: 'MEMBER' },
-              ]}
-              value={user?.role}
-              onChange={(e) => loginDemo(e.target.value as any)}
-              className="text-xs py-1 px-2 w-28"
-            />
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<LogOut className="w-3.5 h-3.5 text-rose-400" />}
+              onClick={() => logout()}
+              className="text-xs text-rose-300 hover:bg-rose-500/10 hover:border-rose-500/30"
+              title="Sign Out"
+            >
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Navigation Sub-Bar */}
-      <div className="md:hidden bg-dark-surface border-b border-dark-border px-3 py-2 flex items-center gap-1 overflow-x-auto scrollbar-none">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap ${
-              activeTab === item.id
-                ? 'bg-brand-500 text-dark-bg font-bold'
-                : 'text-slate-300 bg-dark-card border border-dark-border'
-            }`}
-          >
-            {item.icon}
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </div>
-
       {/* Breadcrumb Module Header */}
-      <div className="bg-dark-surface/40 border-b border-dark-border/60 px-6 py-2 flex items-center justify-between text-xs text-slate-400">
-        <div className="flex items-center gap-2 font-mono text-2xs">
+      <div className="bg-dark-surface/40 border-b border-dark-border/60 px-6 py-2 flex items-center justify-between text-xs text-slate-400 font-mono">
+        <div className="flex items-center gap-2 text-2xs">
           <Layers className="w-3.5 h-3.5 text-brand-400" />
-          <span>Vortiq</span>
+          <span>Vortiq System</span>
           <ChevronRight className="w-3 h-3 text-slate-600" />
-          <span className="text-slate-200 capitalize">{activeTab} Module</span>
+          <span className="text-slate-200 uppercase font-bold">{activeTab === 'crm' ? 'Sales / Leads Pipeline' : activeTab} Workspace</span>
         </div>
         <div className="hidden sm:block text-2xs text-slate-400">
-          Design Tokens: <span className="text-brand-400 font-mono">#10b981 Emerald</span> • Architecture: Shared Primitives
+          Design System: <span className="text-brand-400">Vortiq Design Tokens</span> • Security: Encrypted Tenant Space
         </div>
       </div>
 
       {/* Active Module Viewport */}
       <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
         <ErrorBoundary moduleName={`${activeTab.toUpperCase()} Module`}>
+          {activeTab === 'dashboard' && <DashboardModule onNavigate={(tab) => setActiveTab(tab)} />}
           {activeTab === 'crm' && <SalesPipelineModule />}
           {activeTab === 'finance' && <FinanceModule />}
           {activeTab === 'hr' && <HRModule />}
@@ -294,13 +269,14 @@ export const AppLayout: React.FC = () => {
         isOpen={isCommandOpen}
         onClose={() => setIsCommandOpen(false)}
         items={[
-          { id: '1', title: 'CRM Pipeline & Deals', category: 'CRM', icon: <Users className="w-4 h-4 text-emerald-400" />, onSelect: () => setActiveTab('crm') },
+          { id: '0', title: 'Executive Operational Dashboard', category: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4 text-emerald-400" />, onSelect: () => setActiveTab('dashboard') },
+          { id: '1', title: 'Sales / Leads Pipeline & Deals', category: 'Sales', icon: <Users className="w-4 h-4 text-emerald-400" />, onSelect: () => setActiveTab('crm') },
           { id: '2', title: 'Finance & Tax Invoicing', category: 'Finance', icon: <IndianRupee className="w-4 h-4 text-emerald-400" />, onSelect: () => setActiveTab('finance') },
           { id: '3', title: 'HR Directory & Statutory Payroll', category: 'HR', icon: <UserCheck className="w-4 h-4 text-brand-400" />, onSelect: () => setActiveTab('hr') },
           { id: '4', title: 'Marketing Campaigns & Segments', category: 'Marketing', icon: <Megaphone className="w-4 h-4 text-amber-400" />, onSelect: () => setActiveTab('marketing') },
-          { id: '5', title: 'Task Board & Confluence Wiki', category: 'Tasks', icon: <CheckSquare className="w-4 h-4 text-blue-400" />, onSelect: () => setActiveTab('tasks') },
+          { id: '5', title: 'Task Board & Documentation Wiki', category: 'Tasks', icon: <CheckSquare className="w-4 h-4 text-blue-400" />, onSelect: () => setActiveTab('tasks') },
           { id: '6', title: 'Inventory Register & Photo Scan', category: 'Inventory', icon: <Package className="w-4 h-4 text-amber-400" />, onSelect: () => setActiveTab('inventory') },
-          { id: '7', title: 'Admin Settings & Razorpay Payments', category: 'Admin', icon: <Shield className="w-4 h-4 text-violet-400" />, onSelect: () => setActiveTab('admin') },
+          { id: '7', title: 'Admin Settings & Security Log', category: 'Admin', icon: <Shield className="w-4 h-4 text-violet-400" />, onSelect: () => setActiveTab('admin') },
           { id: '8', title: 'Notifications Center', category: 'Notifications', icon: <Bell className="w-4 h-4 text-rose-400" />, onSelect: () => setActiveTab('notifications') },
         ]}
       />

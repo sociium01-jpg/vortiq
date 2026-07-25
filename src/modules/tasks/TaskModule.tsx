@@ -104,10 +104,10 @@ export const TaskModule: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-black text-slate-100 font-display tracking-tight">Task & Workspace Hub</h1>
-            <Badge variant="violet" size="sm" className="font-mono font-bold">Zoho & Jira Parity</Badge>
+            <Badge variant="emerald" size="sm" className="font-mono font-bold">Enterprise Task Engine</Badge>
           </div>
           <p className="text-xs text-slate-400 font-mono mt-0.5">
-            Multi-View • Task Dependencies • Timesheets • Confluence Docs & Version History
+            Multi-View • Task Dependencies • Timesheets • Documentation Wiki & Version History
           </p>
         </div>
 

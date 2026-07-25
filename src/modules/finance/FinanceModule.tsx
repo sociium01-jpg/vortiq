@@ -23,7 +23,6 @@ import { FinancialStatementExporter } from './FinancialStatementExporter';
 import { FinancialAuditLogModal } from './FinancialAuditLogModal';
 import {
   FileText,
-  Repeat,
   Receipt,
   CreditCard,
   PieChart,
@@ -198,7 +197,7 @@ export const FinanceModule: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-black text-slate-100 font-display tracking-tight">Finance & Accounts Receivable</h1>
-            <Badge variant="violet" size="sm" className="font-mono font-bold">Zoho Books Parity 2026</Badge>
+            <Badge variant="emerald" size="sm" className="font-mono font-bold">India GST Compliant</Badge>
           </div>
           <p className="text-xs text-slate-400 font-mono mt-0.5">
             Invoice & AR • Path A Tally Sync • Path B Custom Templates • Expenses • AP • Statements
@@ -210,7 +209,6 @@ export const FinanceModule: React.FC = () => {
           <div className="flex p-1 bg-dark-surface rounded-xl border border-dark-border overflow-x-auto text-xs font-semibold">
             {[
               { id: 'invoices', label: 'Invoices & AR', icon: FileText },
-              { id: 'recurring', label: 'Customer Subscriptions', icon: Repeat },
               { id: 'expenses', label: 'Expenses & ITC', icon: Receipt },
               { id: 'vendor_bills', label: 'Vendor Bills AP', icon: CreditCard },
               { id: 'tds_ledger', label: 'Form 26Q TDS', icon: Percent },

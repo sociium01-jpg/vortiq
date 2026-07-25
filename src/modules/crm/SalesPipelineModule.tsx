@@ -157,8 +157,8 @@ export const SalesPipelineModule: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-dark-card border border-dark-border rounded-2xl shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black text-slate-100 font-display tracking-tight">Sales Pipeline</h1>
-            <Badge variant="violet" size="sm" className="font-mono font-bold">HubSpot / Zoho Parity</Badge>
+            <h1 className="text-xl font-black text-slate-100 font-display tracking-tight">Sales / Leads Pipeline</h1>
+            <Badge variant="emerald" size="sm" className="font-mono font-bold">Enterprise Pipeline Engine</Badge>
           </div>
           <p className="text-xs text-slate-400 font-mono mt-0.5">
             Stage-Gated Blueprints • Workflows • Forecasting • Cadences • Scoring

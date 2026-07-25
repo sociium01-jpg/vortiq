@@ -27,7 +27,7 @@ export const SchedulingLinkGenerator: React.FC = () => {
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-display flex items-center gap-2">
               <Calendar className="w-4 h-4 text-brand-400" />
-              Rep Meeting Scheduling Links (HubSpot Parity)
+              Rep Meeting Scheduling Links (Booking Engine)
             </h4>
             <p className="text-2xs text-slate-400 mt-0.5">Share booking links directly with prospects for instant calendar sync</p>
           </div>

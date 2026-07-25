@@ -107,7 +107,7 @@ export const InventoryModule: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-black text-slate-100 font-display tracking-tight">Inventory & Floor Operations</h1>
-            <Badge variant="emerald" size="sm" className="font-mono font-bold">Zoho Inventory Parity</Badge>
+            <Badge variant="emerald" size="sm" className="font-mono font-bold">Warehouse Floor Register</Badge>
           </div>
           <p className="text-xs text-slate-400 font-mono mt-0.5">
             Multi-Warehouse • Transfer Orders • POs & GRN • Sales Orders & Drop-ship • GS1 Barcodes

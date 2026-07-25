@@ -48,7 +48,7 @@ export const TaskGanttView: React.FC<TaskGanttViewProps> = ({ tasks, onTaskClick
             Gantt Timeline & Task Dependencies
           </h3>
           <p className="text-2xs text-slate-400 mt-0.5">
-            Zoho Projects-style interactive timeline chart with Finish-to-Start dependency validation
+            Interactive Gantt timeline chart with Finish-to-Start dependency validation
           </p>
         </div>
 

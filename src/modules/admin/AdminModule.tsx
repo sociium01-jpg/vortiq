@@ -62,7 +62,7 @@ export const AdminModule: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-black text-slate-100 font-display tracking-tight">Tenant Settings & Admin Control</h1>
-              <Badge variant="violet" size="sm" className="font-mono font-bold">HubSpot & Zoho Admin Parity</Badge>
+              <Badge variant="emerald" size="sm" className="font-mono font-bold">Enterprise Admin Standard</Badge>
             </div>
             <p className="text-xs text-slate-400 font-mono mt-0.5">
               Team RBAC • Custom Roles & Field Permissions • API Keys • Data Backup Exporter • Audit Logs

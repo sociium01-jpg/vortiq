@@ -75,7 +75,7 @@ export const BlueprintValidationModal: React.FC<BlueprintValidationModalProps> =
               Stage Blueprint Locked: {currentStageName} <ArrowRight className="w-3 h-3 inline mx-1" /> {targetStage.toUpperCase()}
             </p>
             <p className="mt-0.5 text-slate-300">
-              Zoho/HubSpot Blueprint compliance requires completing mandatory deal fields and verification checklist items before advancing.
+              Enterprise Pipeline compliance requires completing mandatory deal fields and verification checklist items before advancing.
             </p>
           </div>
         </div>

@@ -58,7 +58,7 @@ export const TimesheetRollupView: React.FC = () => {
             <span className="text-2xl font-black font-mono text-emerald-400">{billableHours.toFixed(1)} hrs</span>
             <Badge variant="emerald" size="sm">{billableRatio}% Billable</Badge>
           </div>
-          <p className="text-2xs text-slate-400 font-mono mt-1">Ready for Zoho/Invoicing export</p>
+          <p className="text-2xs text-slate-400 font-mono mt-1">Ready for Invoicing export</p>
         </Card>
 
         <Card className="p-4 bg-dark-card border-dark-border">

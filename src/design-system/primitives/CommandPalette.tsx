@@ -4,7 +4,7 @@ import { Search, UserCheck, CheckSquare, Package, Bell, ArrowRight } from 'lucid
 export interface CommandItem {
   id: string;
   title: string;
-  category: 'CRM' | 'Finance' | 'HR' | 'Marketing' | 'Tasks' | 'Inventory' | 'Admin' | 'Notifications';
+  category: 'Dashboard' | 'Sales' | 'CRM' | 'Finance' | 'HR' | 'Marketing' | 'Tasks' | 'Inventory' | 'Admin' | 'Notifications';
   icon: React.ReactNode;
   onSelect: () => void;
 }

@@ -254,7 +254,7 @@ export const SEED_PERFORMANCE_REVIEWS: PerformanceReview[] = [
     cycle_name: 'Q3 2026 Appraisal Cycle',
     self_rating: 4,
     manager_rating: 5,
-    goals_summary: 'Delivered Sales Pipeline & Task Management Zoho/Jira Parity expansions on schedule.',
+    goals_summary: 'Delivered Sales Pipeline & Task Management expansions on schedule.',
     status: 'completed',
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
   },

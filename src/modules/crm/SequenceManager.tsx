@@ -149,7 +149,7 @@ export const SequenceManager: React.FC = () => {
           </div>
 
           <div className="p-3 bg-violet-500/10 border border-violet-500/30 rounded-xl text-2xs text-violet-200">
-            <p className="font-bold">HubSpot / Zoho Auto-Pause Safeguard:</p>
+            <p className="font-bold">Automated Outreach Safeguard:</p>
             <p className="mt-0.5 text-slate-300">
               When a prospect replies to an email or their stage advances to Won/Lost, the cadence automatically pauses to prevent spamming.
             </p>
