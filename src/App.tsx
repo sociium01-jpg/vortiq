@@ -4,11 +4,17 @@ import { AppLayout } from '@/layouts/AppLayout';
 import { AuthModal } from '@/auth/AuthModal';
 import { AuthProvider, useAuth } from '@/auth/AuthContext';
 import { ErrorBoundary } from '@/design-system';
+import { OpsAuthGuard } from '@/modules/ops/OpsAuthGuard';
+import { OpsPortalModule } from '@/modules/ops/OpsPortalModule';
 
 function MainApp() {
   const { user } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'contact_sales'>('login');
+
+  // Ops Portal State
+  const [isOpsAuthModalOpen, setIsOpsAuthModalOpen] = useState(false);
+  const [opsUserEmail, setOpsUserEmail] = useState<string | null>(null);
 
   const handleOpenSignIn = () => {
     setAuthMode('login');
@@ -20,7 +26,21 @@ function MainApp() {
     setIsAuthModalOpen(true);
   };
 
-  // If user is authenticated, render the production AppLayout workspace
+  // If superadmin is authenticated in the Ops Portal
+  if (opsUserEmail) {
+    return (
+      <div className="min-h-screen bg-dark-bg p-4 sm:p-6">
+        <ErrorBoundary moduleName="Internal Ops Portal">
+          <OpsPortalModule
+            opsUserEmail={opsUserEmail}
+            onExitOpsPortal={() => setOpsUserEmail(null)}
+          />
+        </ErrorBoundary>
+      </div>
+    );
+  }
+
+  // If user is authenticated in the main app
   if (user) {
     return (
       <ErrorBoundary moduleName="Application Workspace">
@@ -29,13 +49,14 @@ function MainApp() {
     );
   }
 
-  // Otherwise, render the production Landing Page with AuthModal
+  // Otherwise, render the production Landing Page with AuthModal & Ops Auth Guard
   return (
     <div className="relative">
       <ErrorBoundary moduleName="Landing Page">
         <LandingPage
           onOpenSignIn={handleOpenSignIn}
           onOpenSignUp={handleOpenSignUp}
+          onOpenOpsPortal={() => setIsOpsAuthModalOpen(true)}
         />
       </ErrorBoundary>
 
@@ -43,6 +64,15 @@ function MainApp() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         initialMode={authMode}
+      />
+
+      <OpsAuthGuard
+        isOpen={isOpsAuthModalOpen}
+        onClose={() => setIsOpsAuthModalOpen(false)}
+        onAuthenticated={(email) => {
+          setIsOpsAuthModalOpen(false);
+          setOpsUserEmail(email);
+        }}
       />
     </div>
   );

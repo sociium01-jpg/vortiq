@@ -6,11 +6,12 @@
 import React, { useState, useEffect } from 'react';
 
 export interface LandingPageProps {
-  onOpenSignIn?: () => void;
-  onOpenSignUp?: () => void;
+  onOpenSignIn: () => void;
+  onOpenSignUp: () => void;
+  onOpenOpsPortal?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onOpenSignIn, onOpenSignUp }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onOpenSignIn, onOpenSignUp, onOpenOpsPortal }) => {
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>('system');
 
   useEffect(() => {
@@ -292,7 +293,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenSignIn, onOpenSi
       <footer className="border-t border-[var(--border)] py-8 relative">
         <div className="max-w-[1080px] mx-auto px-7 flex justify-between items-center flex-wrap gap-3 text-xs text-[var(--text-muted)] font-mono">
           <span>© 2026 Vortiq. Built in India.</span>
-          <span>Privacy · Terms · Contact</span>
+          <div className="flex items-center gap-3">
+            <span>Privacy · Terms · Contact</span>
+            {onOpenOpsPortal && (
+              <button
+                onClick={onOpenOpsPortal}
+                className="text-2xs text-[var(--text-muted)] opacity-30 hover:opacity-100 transition-opacity underline cursor-pointer"
+              >
+                Vortiq Employee Ops Portal
+              </button>
+            )}
+          </div>
         </div>
       </footer>
     </div>
