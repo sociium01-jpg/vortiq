@@ -8,10 +8,9 @@ import React, { useState, useEffect } from 'react';
 export interface LandingPageProps {
   onOpenSignIn: () => void;
   onOpenSignUp: () => void;
-  onOpenOpsPortal?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onOpenSignIn, onOpenSignUp, onOpenOpsPortal }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onOpenSignIn, onOpenSignUp }) => {
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>('system');
 
   useEffect(() => {
@@ -295,14 +294,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenSignIn, onOpenSi
           <span>© 2026 Vortiq. Built in India.</span>
           <div className="flex items-center gap-3">
             <span>Privacy · Terms · Contact</span>
-            {onOpenOpsPortal && (
-              <button
-                onClick={onOpenOpsPortal}
-                className="text-2xs text-[var(--text-muted)] opacity-30 hover:opacity-100 transition-opacity underline cursor-pointer"
-              >
-                Vortiq Employee Ops Portal
-              </button>
-            )}
+            <a
+              href="https://vortiq-ops-app-932621312242.asia-south1.run.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-2xs text-[var(--text-muted)] opacity-30 hover:opacity-100 transition-opacity underline cursor-pointer"
+            >
+              Vortiq Employee Ops Portal
+            </a>
           </div>
         </div>
       </footer>
