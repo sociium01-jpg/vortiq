@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserCheck, CheckSquare, Package, Shield, Bell, ArrowRight } from 'lucide-react';
+import { Search, UserCheck, CheckSquare, Package, Bell, ArrowRight } from 'lucide-react';
 
 export interface CommandItem {
   id: string;
@@ -43,7 +43,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     { id: '1', title: 'Create New Lead', category: 'CRM', icon: <UserCheck className="w-4 h-4 text-emerald-400" />, onSelect: () => alert('Navigate to CRM Lead Creation') },
     { id: '2', title: 'View Active Tasks Board', category: 'Tasks', icon: <CheckSquare className="w-4 h-4 text-blue-400" />, onSelect: () => alert('Navigate to Task Board') },
     { id: '3', title: 'Scan Stock QR / Capture Photo', category: 'Inventory', icon: <Package className="w-4 h-4 text-amber-400" />, onSelect: () => alert('Navigate to Photo Scan') },
-    { id: '4', title: 'Manage Tenant Subscriptions', category: 'Admin', icon: <Shield className="w-4 h-4 text-violet-400" />, onSelect: () => alert('Navigate to Admin Settings') },
     { id: '5', title: 'Notification Preferences', category: 'Notifications', icon: <Bell className="w-4 h-4 text-rose-400" />, onSelect: () => alert('Navigate to Notifications') },
   ];
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { auditLogger } from '@/lib/auditLogger';
 import { Card, Input, Select, Button, Badge, Toast } from '@/design-system';
-import { Building2, Upload, CheckCircle2, CreditCard } from 'lucide-react';
+import { Building2, Upload, CheckCircle2 } from 'lucide-react';
 
 export const OrgProfileManager: React.FC = () => {
   const { tenant } = useAuth();
@@ -13,10 +13,6 @@ export const OrgProfileManager: React.FC = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [gstinError, setGstinError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Seat usage indicator (read-only for main app)
-  const activeSeats = 18;
-  const purchasedSeats = 25;
 
   const validateGstinFormat = (val: string): boolean => {
     if (!val) return true;
@@ -64,28 +60,6 @@ export const OrgProfileManager: React.FC = () => {
           onDismiss={() => setToastMessage(null)}
         />
       )}
-
-      {/* Seat Usage Read-Only Banner */}
-      <Card className="bg-dark-surface/60 border-brand-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-brand-500/10 rounded-xl text-brand-400">
-            <CreditCard className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-slate-100 font-display">Active Subscription Seat Count</h4>
-              <Badge variant="emerald" size="sm">Active Plan</Badge>
-            </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Read-only entitlement synced from ops.vortiq.in backend.
-            </p>
-          </div>
-        </div>
-        <div className="text-right font-mono">
-          <div className="text-lg font-extrabold text-slate-100">{activeSeats} / {purchasedSeats} Seats</div>
-          <div className="text-2xs text-brand-400 font-semibold">{purchasedSeats - activeSeats} Available Seats Remaining</div>
-        </div>
-      </Card>
 
       {/* Org Profile Form */}
       <Card className="space-y-6">
