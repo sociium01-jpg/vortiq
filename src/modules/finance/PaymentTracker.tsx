@@ -9,14 +9,17 @@ import { ExtendedInvoice, PaymentRecord, PaymentMode, formatINR } from './types'
 import { Plus, CreditCard, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export interface PaymentTrackerProps {
-  invoices: ExtendedInvoice[];
-  payments: PaymentRecord[];
-  onRecordPayment: (payment: PaymentRecord, updatedInvoice: ExtendedInvoice) => void;
+  invoices?: ExtendedInvoice[];
+  payments?: PaymentRecord[];
+  onRecordPayment: (payment: any, updatedInvoice?: ExtendedInvoice) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  invoice?: ExtendedInvoice | null;
 }
 
 export const PaymentTracker: React.FC<PaymentTrackerProps> = ({
-  invoices,
-  payments,
+  invoices = [],
+  payments = [],
   onRecordPayment,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);

@@ -204,7 +204,7 @@ export interface PayrollRun {
 }
 
 // Phase 2: Finance Types
-export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled' | 'credit_note';
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'partially_paid' | 'overdue' | 'cancelled' | 'credit_note';
 export type GstTreatment = 'b2b' | 'b2c' | 'export' | 'sez' | 'exempt';
 
 export interface Customer {

@@ -34,6 +34,8 @@ export interface ExtendedInvoice extends Invoice {
   customer_gstin?: string;
   customer_email?: string;
   customer_phone?: string;
+  total_amount_paise?: number;
+  total_gst_paise?: number;
   amount_paid_paise: number;
   balance_due_paise: number;
   payments?: PaymentRecord[];
