@@ -3,6 +3,7 @@ import { LandingPage } from '@/pages/LandingPage';
 import { AppLayout } from '@/layouts/AppLayout';
 import { AuthModal } from '@/auth/AuthModal';
 import { AuthProvider, useAuth } from '@/auth/AuthContext';
+import { ThemeProvider } from '@/theme/ThemeContext';
 import { ErrorBoundary } from '@/design-system';
 
 function MainApp() {
@@ -50,8 +51,10 @@ function MainApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

@@ -4,14 +4,25 @@
 
 @layer base {
   :root {
-    --color-bg: #0B0F1D;
-    --color-card: #141A2E;
-    --color-hover: #1B2238;
-    --color-gold: #E5A93C;
-    --color-teal: #22B8A3;
+    --color-bg: #FFFFFF;
+    --color-surface: #F7F7F5;
+    --color-card: #FFFFFF;
+    --color-border: #E3E3DF;
+    --color-text: #16181D;
+    --color-muted: #666A75;
+    --color-accent: #B8791F;
+    --color-teal: #127A69;
+  }
+
+  html.dark {
+    --color-bg: #0B0E17;
+    --color-surface: #12151F;
+    --color-card: #171B27;
+    --color-border: rgba(255, 255, 255, 0.09);
     --color-text: #EDEEF3;
-    --color-muted: #8D93AC;
-    --color-border: rgba(237, 238, 243, 0.10);
+    --color-muted: #888D9C;
+    --color-accent: #E5A93C;
+    --color-teal: #22B8A3;
   }
 
   html {
@@ -19,16 +30,29 @@
   }
 
   body {
-    background-color: #0B0F1D;
-    color: #EDEEF3;
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display, .font-heading {
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
 
   /* Accessible Focus-Visible Outlines */
   *:focus-visible {
-    outline: 2px solid #E5A93C !important;
+    outline: 2px solid #10b981 !important;
     outline-offset: 2px !important;
+  }
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -43,24 +67,11 @@
     }
   }
 
-  .animate-ledger-scroll {
-    animation: scrollLedger 25s linear infinite;
+  .animate-scroll-ledger {
+    animation: scrollLedger 20s linear infinite;
   }
 
-  .animate-ledger-scroll:hover {
+  .animate-scroll-ledger:hover {
     animation-play-state: paused;
-  }
-
-  /* Motion reduction for prefers-reduced-motion */
-  @media (prefers-reduced-motion: reduce) {
-    .animate-ledger-scroll {
-      animation: none !important;
-    }
-    * {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
   }
 }
