@@ -1,15 +1,16 @@
 // ─────────────────────────────────────────────────────────────
 // Vortiq Official Website & Landing Page Surface
-// Clean implementation matching user design with light/dark/auto theme support
+// Clean implementation with Light/Dark/Auto theme support & Sign In / Request Access CTAs
 // ─────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect } from 'react';
 
 export interface LandingPageProps {
-  onNavigateToApp?: () => void;
+  onOpenSignIn?: () => void;
+  onOpenSignUp?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToApp }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onOpenSignIn, onOpenSignUp }) => {
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>('system');
 
   useEffect(() => {
@@ -69,7 +70,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToApp }) => 
             <a href="#pricing" className="hover:text-[var(--text)] transition-colors">Pricing</a>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="flex border border-[var(--border)] rounded-lg overflow-hidden text-xs">
               <button
                 onClick={() => setThemeMode('light')}
@@ -91,18 +92,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToApp }) => 
               </button>
             </div>
 
-            {onNavigateToApp ? (
-              <button
-                onClick={onNavigateToApp}
-                className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-xs font-semibold hover:opacity-90 transition-all cursor-pointer"
-              >
-                Launch App
-              </button>
-            ) : (
-              <a href="#pricing" className="px-4.5 py-2 rounded-lg bg-[var(--accent)] text-white text-xs font-semibold">
-                Start free
-              </a>
-            )}
+            <button
+              onClick={onOpenSignIn}
+              className="px-3.5 py-1.5 rounded-lg border border-[var(--border)] text-[var(--text)] text-xs font-semibold hover:bg-[var(--surface)] transition-all cursor-pointer"
+            >
+              Sign In
+            </button>
+
+            <button
+              onClick={onOpenSignUp}
+              className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-xs font-semibold hover:opacity-90 transition-all cursor-pointer"
+            >
+              Request Access
+            </button>
           </div>
         </div>
       </nav>
@@ -121,21 +123,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToApp }) => 
               Vortiq brings CRM, tasks, HR, inventory, finance and operations into one system — with AI doing the busywork in the background.
             </p>
             <div className="flex gap-3 flex-wrap">
-              {onNavigateToApp ? (
-                <button
-                  onClick={onNavigateToApp}
-                  className="bg-[var(--accent)] text-white px-5.5 py-3 rounded-lg font-semibold text-sm hover:opacity-90 transition-all cursor-pointer"
-                >
-                  Start free
-                </button>
-              ) : (
-                <a href="#pricing" className="bg-[var(--accent)] text-white px-5.5 py-3 rounded-lg font-semibold text-sm">
-                  Start free
-                </a>
-              )}
-              <a href="#how" className="px-5 py-3 rounded-lg font-semibold text-sm border border-[var(--border)] text-[var(--text)]">
-                See how it works
-              </a>
+              <button
+                onClick={onOpenSignUp}
+                className="bg-[var(--accent)] text-white px-5.5 py-3 rounded-lg font-semibold text-sm hover:opacity-90 transition-all cursor-pointer"
+              >
+                Request Access
+              </button>
+              <button
+                onClick={onOpenSignIn}
+                className="px-5 py-3 rounded-lg font-semibold text-sm border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface)] transition-all cursor-pointer"
+              >
+                Sign In
+              </button>
             </div>
           </div>
 
@@ -254,18 +253,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToApp }) => 
                 <li className="border-t border-[var(--border)] pt-2"><span className="text-[var(--teal)]">— </span>Finance (GST-ready) &amp; marketing</li>
                 <li className="border-t border-[var(--border)] pt-2"><span className="text-[var(--teal)]">— </span>Voice-based updates, AI-polished</li>
               </ul>
-              {onNavigateToApp ? (
-                <button
-                  onClick={onNavigateToApp}
-                  className="w-full text-center bg-[var(--accent)] text-white py-3 rounded-lg font-semibold text-sm hover:opacity-90 transition-all cursor-pointer"
-                >
-                  Start free
-                </button>
-              ) : (
-                <a href="#" className="block text-center bg-[var(--accent)] text-white py-3 rounded-lg font-semibold text-sm">
-                  Start free
-                </a>
-              )}
+              <button
+                onClick={onOpenSignUp}
+                className="w-full text-center bg-[var(--accent)] text-white py-3 rounded-lg font-semibold text-sm hover:opacity-90 transition-all cursor-pointer"
+              >
+                Request Access
+              </button>
             </div>
           </div>
         </div>
@@ -278,21 +271,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToApp }) => 
             <h2 className="text-2xl md:text-3xl font-bold font-display mb-3.5">Your whole business, finally in one ledger.</h2>
             <p className="text-[var(--text-muted)] text-sm mb-6">Fourteen days, every module unlocked, no card required.</p>
             <div className="flex gap-3 justify-center flex-wrap">
-              {onNavigateToApp ? (
-                <button
-                  onClick={onNavigateToApp}
-                  className="bg-[var(--accent)] text-white px-5.5 py-3 rounded-lg font-semibold text-sm hover:opacity-90 transition-all cursor-pointer"
-                >
-                  Start free
-                </button>
-              ) : (
-                <a href="#" className="bg-[var(--accent)] text-white px-5.5 py-3 rounded-lg font-semibold text-sm">
-                  Start free
-                </a>
-              )}
-              <a href="#how" className="px-5 py-3 rounded-lg font-semibold text-sm border border-[var(--border)] text-[var(--text)]">
-                Book a demo
-              </a>
+              <button
+                onClick={onOpenSignUp}
+                className="bg-[var(--accent)] text-white px-5.5 py-3 rounded-lg font-semibold text-sm hover:opacity-90 transition-all cursor-pointer"
+              >
+                Request Access
+              </button>
+              <button
+                onClick={onOpenSignIn}
+                className="px-5 py-3 rounded-lg font-semibold text-sm border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface)] transition-all cursor-pointer"
+              >
+                Sign In
+              </button>
             </div>
           </div>
         </div>
@@ -304,16 +294,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToApp }) => 
           <span>© 2026 Vortiq. Built in India.</span>
           <span>Privacy · Terms · Contact</span>
         </div>
-        {/* Secret Internal Link */}
-        {onNavigateToApp && (
-          <button
-            onClick={onNavigateToApp}
-            aria-hidden="true"
-            tabIndex={-1}
-            title="Secret App Launcher"
-            style={{ position: 'fixed', bottom: '8px', right: '10px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--border)', display: 'block', border: 'none', cursor: 'pointer' }}
-          />
-        )}
       </footer>
     </div>
   );

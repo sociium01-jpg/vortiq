@@ -7,6 +7,7 @@ import { MarketingModule } from '@/modules/marketing/MarketingModule';
 import { TaskModule } from '@/modules/tasks/TaskModule';
 import { InventoryModule } from '@/modules/inventory/InventoryModule';
 import { AdminModule } from '@/modules/admin/AdminModule';
+import { VaultModule } from '@/modules/vault/VaultModule';
 import { NotificationsModule } from '@/modules/notifications/NotificationsModule';
 import { NotificationDrawer } from '@/modules/notifications/NotificationDrawer';
 import { AppNotification } from '@/types';
@@ -30,11 +31,12 @@ import {
   ChevronRight,
   IndianRupee,
   LogIn,
+  Database,
 } from 'lucide-react';
 import { AuthModal } from '@/auth/AuthModal';
 import { OnboardingWizardModal } from '@/auth/OnboardingWizardModal';
 
-export type ModuleTab = 'crm' | 'finance' | 'hr' | 'marketing' | 'tasks' | 'inventory' | 'admin' | 'notifications';
+export type ModuleTab = 'crm' | 'finance' | 'hr' | 'marketing' | 'tasks' | 'inventory' | 'vault' | 'admin' | 'notifications';
 
 export const AppLayout: React.FC = () => {
   const { user, tenant, loginDemo, isOnboardingOpen, setIsOnboardingOpen } = useAuth();
@@ -104,6 +106,7 @@ export const AppLayout: React.FC = () => {
     { id: 'marketing', label: 'Marketing & Data', icon: <Megaphone className="w-4 h-4" /> },
     { id: 'tasks', label: 'Tasks & Docs', icon: <CheckSquare className="w-4 h-4" /> },
     { id: 'inventory', label: 'Inventory & Floor', icon: <Package className="w-4 h-4" />, badge: 'Alert' },
+    { id: 'vault', label: 'Data Vault', icon: <Database className="w-4 h-4 text-emerald-400" /> },
     { id: 'admin', label: 'Admin & Billing', icon: <Shield className="w-4 h-4" /> },
     { id: 'notifications', label: 'Notifications Center', icon: <Bell className="w-4 h-4" />, badge: unreadCount > 0 ? `${unreadCount}` : undefined },
   ];
@@ -270,6 +273,7 @@ export const AppLayout: React.FC = () => {
           {activeTab === 'marketing' && <MarketingModule />}
           {activeTab === 'tasks' && <TaskModule />}
           {activeTab === 'inventory' && <InventoryModule />}
+          {activeTab === 'vault' && <VaultModule />}
           {activeTab === 'admin' && <AdminModule />}
           {activeTab === 'notifications' && <NotificationsModule />}
         </ErrorBoundary>
