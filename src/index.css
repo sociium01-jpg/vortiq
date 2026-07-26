@@ -4,14 +4,14 @@
 
 @layer base {
   :root {
-    --color-bg: #FFFFFF;
-    --color-surface: #F7F7F5;
+    --color-bg: #F2F5FB;
+    --color-surface: #FFFFFF;
     --color-card: #FFFFFF;
-    --color-border: #E3E3DF;
-    --color-text: #16181D;
-    --color-muted: #666A75;
-    --color-accent: #B8791F;
-    --color-teal: #127A69;
+    --color-border: #E8EEF8;
+    --color-text: #1E293B;
+    --color-muted: #64748B;
+    --color-accent: #2563EB;
+    --color-teal: #10B981;
   }
 
   html.dark {
@@ -21,8 +21,8 @@
     --color-border: rgba(255, 255, 255, 0.09);
     --color-text: #EDEEF3;
     --color-muted: #888D9C;
-    --color-accent: #E5A93C;
-    --color-teal: #22B8A3;
+    --color-accent: #3B82F6;
+    --color-teal: #10B981;
   }
 
   html {
@@ -32,46 +32,46 @@
   body {
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    background: radial-gradient(circle at 10% 20%, rgba(219, 234, 254, 0.7) 0%, rgba(255, 255, 255, 0.8) 40%),
+                radial-gradient(circle at 90% 10%, rgba(243, 232, 255, 0.7) 0%, rgba(255, 255, 255, 0.8) 40%),
+                radial-gradient(circle at 50% 90%, rgba(224, 242, 254, 0.6) 0%, rgba(242, 245, 251, 1) 60%);
+    background-attachment: fixed;
+    color: var(--color-text);
   }
 
   h1, h2, h3, h4, h5, h6, .font-display, .font-heading {
     font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
-
-  /* Accessible Focus-Visible Outlines */
-  *:focus-visible {
-    outline: 2px solid #10b981 !important;
-    outline-offset: 2px !important;
-  }
 }
 
-/* Reduced Motion Override */
+/* Custom Card Glow Blobs matching the reference screenshot */
+.blob-blue {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, rgba(59, 130, 246, 0) 70%);
+}
+.blob-green {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0) 70%);
+}
+.blob-orange {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.35) 0%, rgba(245, 158, 11, 0) 70%);
+}
+.blob-purple {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, rgba(168, 85, 247, 0) 70%);
+}
+
+/* Active Sidebar Pill Highlight */
+.nav-pill-active {
+  background-color: #EFF6FF;
+  color: #2563EB;
+  font-weight: 600;
+  border-radius: 0.75rem;
+}
+
+/* Reduced Motion Safety */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-@layer components {
-  /* Continuous Auto-Scrolling Feed for Physical Ledger */
-  @keyframes scrollLedger {
-    0% {
-      transform: translateY(0);
-    }
-    100% {
-      transform: translateY(-50%);
-    }
-  }
-
-  .animate-scroll-ledger {
-    animation: scrollLedger 20s linear infinite;
-  }
-
-  .animate-scroll-ledger:hover {
-    animation-play-state: paused;
   }
 }
