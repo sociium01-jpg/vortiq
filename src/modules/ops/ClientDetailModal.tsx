@@ -4,22 +4,87 @@
 // ─────────────────────────────────────────────────────────────
 
 import React from 'react';
-import { Modal, Badge, DataTable } from '@/design-system';
-import { OpsClientOrg } from './types';
-import { Building2, Mail, Calendar, ShieldCheck, CreditCard, History, IndianRupee } from 'lucide-react';
+import { Modal, Badge, Button } from '@/design-system';
+import { OpsClientOrg, OpsSubscriptionStatus, OpsClientAuditLog } from './types';
+import { Building2, Mail, Calendar, ShieldCheck, History, Lock, Unlock, Clock } from 'lucide-react';
 
 interface ClientDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   client: OpsClientOrg | null;
+  onUpdateClient: (updated: OpsClientOrg) => void;
 }
 
 export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
   isOpen,
   onClose,
   client,
+  onUpdateClient,
 }) => {
+
   if (!client) return null;
+
+  const handleExtendTrial = (days: number) => {
+    const currentEnd = new Date(client.billing_period_end).getTime();
+    const newEnd = new Date(currentEnd + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const newAuditLog: OpsClientAuditLog = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      actor_name: 'Alex Vance (Ops Lead)',
+      action_type: 'TRIAL_EXTENSION',
+      details: `Extended trial by ${days} days until ${newEnd}`,
+    };
+
+    const updated: OpsClientOrg = {
+      ...client,
+      billing_period_end: newEnd,
+      subscription_status: 'trial',
+      audit_logs: [newAuditLog, ...(client.audit_logs || [])],
+    };
+    onUpdateClient(updated);
+  };
+
+  const handleAdjustSeats = (delta: number) => {
+    const updatedSeats = Math.max(1, client.seats_allocated + delta);
+    const newAuditLog: OpsClientAuditLog = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      actor_name: 'Alex Vance (Ops Lead)',
+      action_type: 'SEAT_ADJUSTMENT',
+      details: `Adjusted allocated seats from ${client.seats_allocated} to ${updatedSeats}`,
+    };
+
+    const updated: OpsClientOrg = {
+      ...client,
+      seats_allocated: updatedSeats,
+      audit_logs: [newAuditLog, ...(client.audit_logs || [])],
+    };
+    onUpdateClient(updated);
+  };
+
+  const handleToggleDeactivation = () => {
+    const newStatus: OpsSubscriptionStatus = client.subscription_status === 'suspended' ? 'active' : 'suspended';
+    const actionLabel = newStatus === 'suspended' ? 'DEACTIVATION_LOCK' : 'STATUS_CHANGE';
+    const detailText = newStatus === 'suspended'
+      ? 'Soft-locked client access across all user accounts in org'
+      : 'Restored active client access';
+
+    const newAuditLog: OpsClientAuditLog = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      actor_name: 'Alex Vance (Ops Lead)',
+      action_type: actionLabel,
+      details: detailText,
+    };
+
+    const updated: OpsClientOrg = {
+      ...client,
+      subscription_status: newStatus,
+      audit_logs: [newAuditLog, ...(client.audit_logs || [])],
+    };
+    onUpdateClient(updated);
+  };
 
   return (
     <Modal
@@ -28,7 +93,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
       title={`Client Account Inspector — ${client.org_name}`}
       maxWidth="lg"
     >
-      <div className="space-y-6 font-mono text-xs text-slate-100">
+      <div className="space-y-6 font-mono text-xs text-slate-100 py-2">
         {/* Header Profile Summary */}
         <div className="p-4 bg-dark-card border border-dark-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -38,7 +103,17 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-slate-100 font-display">{client.org_name}</h2>
-                <Badge variant={client.subscription_status === 'active' ? 'emerald' : 'amber'} size="sm" className="uppercase font-bold">
+                <Badge
+                  variant={
+                    client.subscription_status === 'active'
+                      ? 'emerald'
+                      : client.subscription_status === 'trial'
+                      ? 'amber'
+                      : 'rose'
+                  }
+                  size="sm"
+                  className="uppercase font-bold"
+                >
                   {client.subscription_status}
                 </Badge>
               </div>
@@ -63,97 +138,120 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <span className="text-3xs font-semibold text-slate-400 uppercase tracking-wider block flex items-center gap-1">
               <Calendar className="w-3 h-3 text-slate-500" /> Registration Date
             </span>
-            <span className="text-xs font-bold text-slate-200">{new Date(client.signup_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+            <span className="text-xs font-bold text-slate-200">{client.signup_date}</span>
           </div>
 
           <div className="p-3 bg-dark-surface rounded-xl border border-dark-border space-y-1">
             <span className="text-3xs font-semibold text-slate-400 uppercase tracking-wider block flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-slate-500" /> Seat Allocation
+              <Clock className="w-3 h-3 text-slate-500" /> Billing / Trial End
+            </span>
+            <span className="text-xs font-bold text-amber-300">{client.billing_period_end}</span>
+          </div>
+
+          <div className="p-3 bg-dark-surface rounded-xl border border-dark-border space-y-1">
+            <span className="text-3xs font-semibold text-slate-400 uppercase tracking-wider block flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-slate-500" /> Allocated Seats
             </span>
             <span className="text-xs font-bold text-slate-200">{client.seats_used} / {client.seats_allocated} Seats Used</span>
           </div>
+        </div>
 
-          <div className="p-3 bg-dark-surface rounded-xl border border-dark-border space-y-1">
-            <span className="text-3xs font-semibold text-slate-400 uppercase tracking-wider block flex items-center gap-1">
-              <IndianRupee className="w-3 h-3 text-emerald-400" /> Billing Period End
-            </span>
-            <span className="text-xs font-bold text-emerald-400">{new Date(client.billing_period_end).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+        {/* Interactive Actions Panel */}
+        <div className="p-4 bg-dark-card border border-dark-border rounded-xl space-y-4">
+          <h3 className="text-xs font-bold text-slate-200 uppercase font-mono tracking-wider">
+            Superadmin Account Actions (Logged)
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Grant Trial Extension */}
+            <div className="space-y-2 p-3 bg-dark-surface rounded-lg border border-dark-border">
+              <span className="text-2xs font-semibold text-slate-300 block">Grant Trial Extension</span>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => handleExtendTrial(7)}>
+                  +7 Days
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleExtendTrial(15)}>
+                  +15 Days
+                </Button>
+              </div>
+            </div>
+
+            {/* Adjust Allocated Seats */}
+            <div className="space-y-2 p-3 bg-dark-surface rounded-lg border border-dark-border">
+              <span className="text-2xs font-semibold text-slate-300 block">Adjust Seat Allocation</span>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => handleAdjustSeats(5)}>
+                  +5 Seats
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleAdjustSeats(-5)}>
+                  -5 Seats
+                </Button>
+              </div>
+            </div>
+
+            {/* Soft-Lock Deactivation */}
+            <div className="space-y-2 p-3 bg-dark-surface rounded-lg border border-dark-border">
+              <span className="text-2xs font-semibold text-slate-300 block">Access Control</span>
+              <Button
+                variant={client.subscription_status === 'suspended' ? 'primary' : 'danger'}
+                size="sm"
+                className="w-full"
+                leftIcon={client.subscription_status === 'suspended' ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                onClick={handleToggleDeactivation}
+              >
+                {client.subscription_status === 'suspended' ? 'Reactivate Client Access' : 'Deactivate (Soft-Lock)'}
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Client Payment History Ledger */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-display flex items-center gap-1.5">
-            <CreditCard className="w-4 h-4 text-emerald-400" />
-            Client Payment Ledger & Renewal History
-          </h3>
+        {/* Audit Log Table */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-200 uppercase font-mono tracking-wider flex items-center gap-2">
+              <History className="w-4 h-4 text-brand-400" /> Account Audit History (`ops_client_audit_logs`)
+            </h3>
+            <span className="text-2xs text-slate-400 font-mono">{client.audit_logs?.length || 0} Entries</span>
+          </div>
 
-          <DataTable
-            data={client.payment_history || []}
-            keyExtractor={(item) => item.id}
-            columns={[
-              {
-                key: 'payment_date',
-                header: 'Payment Date',
-                render: (item) => new Date(item.payment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-              },
-              {
-                key: 'amount',
-                header: 'Amount',
-                render: (item) => `₹${item.amount_rupees.toLocaleString('en-IN')}`,
-              },
-              {
-                key: 'payment_method',
-                header: 'Payment Mode',
-                render: (item) => <span className="uppercase text-3xs font-bold text-slate-300">{item.payment_method.replace(/_/g, ' ')}</span>,
-              },
-              {
-                key: 'reference_number',
-                header: 'Reference #',
-                render: (item) => item.reference_number,
-              },
-              {
-                key: 'recorded_by_name',
-                header: 'Recorded By',
-                render: (item) => item.recorded_by_name,
-              },
-            ]}
-          />
+          <div className="border border-dark-border rounded-xl overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-dark-border text-2xs uppercase font-mono text-slate-400 bg-dark-surface/50">
+                  <th className="py-2.5 px-3">Timestamp</th>
+                  <th className="py-2.5 px-3">Actor</th>
+                  <th className="py-2.5 px-3">Action</th>
+                  <th className="py-2.5 px-3">Details</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-dark-border text-2xs font-mono">
+                {client.audit_logs && client.audit_logs.length > 0 ? (
+                  client.audit_logs.map((log) => (
+                    <tr key={log.id} className="hover:bg-slate-800/20">
+                      <td className="py-2.5 px-3 text-slate-400">{log.timestamp}</td>
+                      <td className="py-2.5 px-3 text-slate-200 font-semibold">{log.actor_name}</td>
+                      <td className="py-2.5 px-3">
+                        <Badge variant="blue" size="sm">{log.action_type}</Badge>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-300">{log.details}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="py-4 text-center text-slate-500 font-mono text-xs">
+                      No audit log entries recorded for this client.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Internal Ops Audit Logs */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-display flex items-center gap-1.5">
-            <History className="w-4 h-4 text-brand-400" />
-            Internal Superadmin Audit Log Stream
-          </h3>
-
-          <DataTable
-            data={client.audit_logs || []}
-            keyExtractor={(log) => log.id}
-            columns={[
-              {
-                key: 'timestamp',
-                header: 'Timestamp',
-                render: (log) => new Date(log.timestamp).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-              },
-              {
-                key: 'actor_name',
-                header: 'Actor',
-                render: (log) => log.actor_name,
-              },
-              {
-                key: 'action_type',
-                header: 'Action Type',
-                render: (log) => <Badge variant="violet" size="sm">{log.action_type}</Badge>,
-              },
-              {
-                key: 'details',
-                header: 'Details',
-                render: (log) => log.details,
-              },
-            ]}
-          />
+        <div className="pt-2 flex justify-end">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Close Inspector
+          </Button>
         </div>
       </div>
     </Modal>

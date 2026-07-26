@@ -3,9 +3,10 @@
 // Restricted to Vortiq Employees Only (Separate Deployment Realm)
 // ─────────────────────────────────────────────────────────────
 
-export type OpsSubscriptionStatus = 'active' | 'trial' | 'suspended' | 'cancelled' | 'renewal_due';
+export type OpsSubscriptionStatus = 'active' | 'trial' | 'suspended' | 'cancelled' | 'pending_activation' | 'renewal_due';
 export type OpsPlanTier = 'starter' | 'pro' | 'enterprise';
 export type ManualPaymentMethod = 'neft_bank_transfer' | 'cheque' | 'card_offline' | 'cash';
+export type OpsUserRole = 'super_admin' | 'billing_manager' | 'support_lead' | 'read_only_analyst';
 
 export interface OpsClientOrg {
   id: string;
@@ -43,7 +44,7 @@ export interface OpsClientAuditLog {
   id: string;
   timestamp: string;
   actor_name: string;
-  action_type: 'STATUS_CHANGE' | 'SEAT_ADJUSTMENT' | 'TRIAL_EXTENSION' | 'PAYMENT_RECORDED' | 'PROVISIONING';
+  action_type: 'STATUS_CHANGE' | 'SEAT_ADJUSTMENT' | 'TRIAL_EXTENSION' | 'PAYMENT_RECORDED' | 'PROVISIONING' | 'DEACTIVATION_LOCK';
   details: string;
 }
 
@@ -54,10 +55,12 @@ export interface VortiqPlatformInvoice {
   client_email: string;
   amount_rupees: number;
   tax_amount_gst: number; // 18% GST on SaaS
+  tds_deducted_rupees?: number;
   billing_date: string;
   due_date: string;
   status: 'paid' | 'pending' | 'overdue';
   plan_tier: OpsPlanTier;
+  is_manually_logged: boolean;
 }
 
 export interface VortiqOperatingExpense {
@@ -74,7 +77,7 @@ export interface SecuritySignalAlert {
   id: string;
   timestamp: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  signal_source: 'Supabase Auth' | 'Public API Rate Limiter' | 'Data Vault Audit Engine';
+  signal_source: 'Supabase Auth' | 'Public API Rate Limiter' | 'Data Vault Audit Engine' | 'GCP Cloud Armor';
   alert_title: string;
   details: string;
   ip_address?: string;
@@ -91,4 +94,49 @@ export interface OpsAlert {
   client_id?: string;
   client_name?: string;
   created_at: string;
+}
+
+// Section 4: Internal Vortiq Employee User
+export interface OpsEmployeeUser {
+  id: string;
+  full_name: string;
+  email: string;
+  role: OpsUserRole;
+  status: 'active' | 'inactive';
+  last_active_at: string;
+}
+
+// Section 5: Support Ticket
+export interface SupportTicket {
+  id: string;
+  ticket_number: string;
+  client_id: string;
+  client_name: string;
+  submitted_by_email: string;
+  subject: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'open' | 'in_progress' | 'resolved';
+  assigned_to_email: string;
+  created_at: string;
+  updated_at: string;
+  activity_thread: SupportTicketReply[];
+}
+
+export interface SupportTicketReply {
+  id: string;
+  sender_name: string;
+  sender_role: 'client' | 'vortiq_employee';
+  message: string;
+  timestamp: string;
+}
+
+// Section 8: Vault Export Log
+export interface OpsVaultExportLog {
+  id: string;
+  exported_by_email: string;
+  format: 'xlsx' | 'pdf' | 'csv';
+  data_scope: string;
+  row_count: number;
+  timestamp: string;
 }

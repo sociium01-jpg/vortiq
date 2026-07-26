@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
 // Vortiq Internal Ops — Main Portal Workspace Container
-// Hosted Realm: Section 1 Dashboard, Section 2 Clients, Section 3 Vortiq Finance, Section 4 Security
+// Hosted Realm: 8 Full Operations Sections
 // Restricted strictly to Vortiq Employees (@vortiq.biz) in Standalone Deployment
 // ─────────────────────────────────────────────────────────────
 
@@ -10,6 +10,10 @@ import { OpsClientDirectory } from './OpsClientDirectory';
 import { OpsDashboardView } from './OpsDashboardView';
 import { VortiqFinanceModule } from './VortiqFinanceModule';
 import { OpsSecurityCenter } from './OpsSecurityCenter';
+import { OpsUserControls } from './OpsUserControls';
+import { OpsSupportCenter } from './OpsSupportCenter';
+import { OpsAnalyticsView } from './OpsAnalyticsView';
+import { OpsDataVaultExport } from './OpsDataVaultExport';
 import { ClientProvisioningModal } from './ClientProvisioningModal';
 import { ManualPaymentLedgerModal } from './ManualPaymentLedgerModal';
 import { ClientDetailModal } from './ClientDetailModal';
@@ -19,9 +23,12 @@ import {
   Users,
   IndianRupee,
   ShieldAlert,
+  UserCheck,
+  LifeBuoy,
+  BarChart3,
+  Database,
   LogOut,
   Plus,
-  Lock,
 } from 'lucide-react';
 
 interface OpsPortalModuleProps {
@@ -29,7 +36,15 @@ interface OpsPortalModuleProps {
   onExitOpsPortal: () => void;
 }
 
-export type OpsTab = 'dashboard' | 'clients' | 'finance' | 'security';
+export type OpsTab =
+  | 'dashboard'
+  | 'clients'
+  | 'finance'
+  | 'users'
+  | 'support'
+  | 'analytics'
+  | 'security'
+  | 'vault_export';
 
 export const OpsPortalModule: React.FC<OpsPortalModuleProps> = ({
   opsUserEmail,
@@ -143,6 +158,11 @@ export const OpsPortalModule: React.FC<OpsPortalModuleProps> = ({
     );
   };
 
+  const handleUpdateClient = (updated: OpsClientOrg) => {
+    setClients((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setInspectingClient(updated);
+  };
+
   const handleClientProvisioned = (newClient: OpsClientOrg) => {
     setClients([newClient, ...clients]);
   };
@@ -151,122 +171,107 @@ export const OpsPortalModule: React.FC<OpsPortalModuleProps> = ({
     setClients((prev) =>
       prev.map((c) => {
         if (c.id === payment.client_id) {
-          const currentEnd = new Date(c.billing_period_end);
-          currentEnd.setMonth(currentEnd.getMonth() + payment.extension_months);
+          const currentEnd = new Date(c.billing_period_end).getTime();
+          const monthsInMs = payment.extension_months * 30 * 24 * 60 * 60 * 1000;
+          const newEndStr = new Date(currentEnd + monthsInMs).toISOString().split('T')[0];
+
           return {
             ...c,
             subscription_status: 'active',
-            billing_period_end: currentEnd.toISOString().split('T')[0],
+            billing_period_end: newEndStr,
             payment_history: [payment, ...(c.payment_history || [])],
           };
         }
         return c;
       })
     );
-    setSelectedClientForPayment(null);
   };
 
-  const handleNavigateToClients = (filter: string = 'all') => {
-    setStatusFilter(filter);
+  const handleNavigateToFilter = (status?: string) => {
+    if (status) setStatusFilter(status);
     setActiveTab('clients');
   };
 
   return (
-    <div className="space-y-6 font-mono text-xs text-slate-100">
-      {/* Top Superadmin App Bar */}
-      <header className="p-4 bg-dark-card border border-dark-border rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-dark-bg font-extrabold text-2xl font-display shadow-lg shadow-brand-500/20">
-            V
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-slate-100 font-display">Vortiq Internal Operations & Superadmin Portal</h1>
-              <Badge variant="emerald" size="sm" className="font-mono font-bold uppercase">
-                Isolated Realm
-              </Badge>
+    <div className="min-h-screen bg-[#0B0E17] text-[#EDEEF3] font-sans antialiased selection:bg-brand-500/30 selection:text-brand-300">
+      {/* Top Operations Header Bar */}
+      <header className="border-b border-dark-border bg-dark-card/80 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-400 flex items-center justify-center text-dark-bg font-extrabold text-sm font-display shadow-md shadow-brand-500/20">
+              V
             </div>
-            <p className="text-3xs text-slate-400 mt-0.5 flex items-center gap-1.5">
-              <Lock className="w-3 h-3 text-emerald-400" />
-              <span>Authenticated as <strong className="text-brand-300">{opsUserEmail}</strong> (Server Validated)</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Global Navigation Tabs & Actions */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex p-1 bg-dark-surface rounded-xl border border-dark-border text-xs font-semibold">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
-                activeTab === 'dashboard' ? 'bg-brand-500 text-dark-bg font-bold shadow-md' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Dashboard</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('clients')}
-              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
-                activeTab === 'clients' ? 'bg-brand-500 text-dark-bg font-bold shadow-md' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Clients</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('finance')}
-              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
-                activeTab === 'finance' ? 'bg-brand-500 text-dark-bg font-bold shadow-md' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <IndianRupee className="w-3.5 h-3.5" />
-              <span>Vortiq Finance</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('security')}
-              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all ${
-                activeTab === 'security' ? 'bg-brand-500 text-dark-bg font-bold shadow-md' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Security Monitoring</span>
-            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-slate-100 font-display tracking-tight">Vortiq Internal Operations</span>
+                <Badge variant="amber" size="sm" className="font-mono font-bold">Vortiq Employee Portal</Badge>
+              </div>
+              <p className="text-3xs text-slate-400 font-mono">
+                Authenticated: <span className="text-brand-300">{opsUserEmail}</span>
+              </p>
+            </div>
           </div>
 
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<Plus className="w-3.5 h-3.5" />}
-            onClick={() => setIsProvisioningModalOpen(true)}
-          >
-            Provision Client Space
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus className="w-3.5 h-3.5 text-emerald-400" />}
+              onClick={() => setIsProvisioningModalOpen(true)}
+            >
+              Provision New Client
+            </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<LogOut className="w-3.5 h-3.5 text-rose-400" />}
-            onClick={onExitOpsPortal}
-            title="Exit Superadmin Realm"
-          >
-            Exit Realm
-          </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<LogOut className="w-3.5 h-3.5 text-rose-400" />}
+              onClick={onExitOpsPortal}
+            >
+              Exit Ops Portal
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Rendered Ops Submodules */}
-      <main className="space-y-6">
+      {/* Main Container */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Navigation Tabs (8 Sections) */}
+        <div className="flex p-1.5 bg-dark-card rounded-xl border border-dark-border overflow-x-auto text-xs font-semibold font-mono">
+          {[
+            { id: 'dashboard', label: '1. Dashboard', icon: LayoutDashboard },
+            { id: 'clients', label: '2. Clients', icon: Users },
+            { id: 'finance', label: '3. Billing', icon: IndianRupee },
+            { id: 'users', label: '4. User Controls', icon: UserCheck },
+            { id: 'support', label: '5. Support', icon: LifeBuoy },
+            { id: 'analytics', label: '6. Analytics', icon: BarChart3 },
+            { id: 'security', label: '7. SOC / Security', icon: ShieldAlert },
+            { id: 'vault_export', label: '8. Settings & Vault', icon: Database },
+          ].map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id as OpsTab)}
+              className={`px-3.5 py-2 rounded-lg flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === id
+                  ? 'bg-brand-500 text-dark-bg font-bold shadow-md shadow-brand-500/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* SECTION 1: DASHBOARD */}
         {activeTab === 'dashboard' && (
           <OpsDashboardView
             clients={clients}
-            onNavigateToClients={handleNavigateToClients}
+            onNavigateToClients={handleNavigateToFilter}
           />
         )}
 
+        {/* SECTION 2: CLIENT DIRECTORY */}
         {activeTab === 'clients' && (
           <OpsClientDirectory
             clients={clients}
@@ -278,6 +283,7 @@ export const OpsPortalModule: React.FC<OpsPortalModuleProps> = ({
           />
         )}
 
+        {/* SECTION 3: BILLING & VORTIQ FINANCE */}
         {activeTab === 'finance' && (
           <VortiqFinanceModule
             clients={clients}
@@ -285,30 +291,50 @@ export const OpsPortalModule: React.FC<OpsPortalModuleProps> = ({
           />
         )}
 
-        {activeTab === 'security' && (
-          <OpsSecurityCenter />
-        )}
+        {/* SECTION 4: USER CONTROLS */}
+        {activeTab === 'users' && <OpsUserControls />}
+
+        {/* SECTION 5: SUPPORT DESK */}
+        {activeTab === 'support' && <OpsSupportCenter />}
+
+        {/* SECTION 6: ANALYTICS */}
+        {activeTab === 'analytics' && <OpsAnalyticsView />}
+
+        {/* SECTION 7: SOC / SECURITY */}
+        {activeTab === 'security' && <OpsSecurityCenter />}
+
+        {/* SECTION 8: SETTINGS & VAULT EXPORT */}
+        {activeTab === 'vault_export' && <OpsDataVaultExport />}
       </main>
 
-      {/* Shared Modals */}
-      <ClientProvisioningModal
-        isOpen={isProvisioningModalOpen}
-        onClose={() => setIsProvisioningModalOpen(false)}
-        onProvisionClient={handleClientProvisioned}
-      />
+      {/* Provisioning Modal */}
+      {isProvisioningModalOpen && (
+        <ClientProvisioningModal
+          isOpen={isProvisioningModalOpen}
+          onClose={() => setIsProvisioningModalOpen(false)}
+          onProvisionClient={handleClientProvisioned}
+        />
+      )}
 
-      <ManualPaymentLedgerModal
-        isOpen={!!selectedClientForPayment}
-        onClose={() => setSelectedClientForPayment(null)}
-        client={selectedClientForPayment}
-        onRecordPayment={handleRecordPayment}
-      />
+      {/* Manual Payment Ledger Modal */}
+      {selectedClientForPayment && (
+        <ManualPaymentLedgerModal
+          isOpen={!!selectedClientForPayment}
+          onClose={() => setSelectedClientForPayment(null)}
+          client={selectedClientForPayment}
+          onRecordPayment={handleRecordPayment}
+        />
+      )}
 
-      <ClientDetailModal
-        isOpen={!!inspectingClient}
-        onClose={() => setInspectingClient(null)}
-        client={inspectingClient}
-      />
+      {/* Client Detail Inspector Modal */}
+      {inspectingClient && (
+        <ClientDetailModal
+          isOpen={!!inspectingClient}
+          onClose={() => setInspectingClient(null)}
+          client={inspectingClient}
+          onUpdateClient={handleUpdateClient}
+        />
+      )}
     </div>
   );
 };
