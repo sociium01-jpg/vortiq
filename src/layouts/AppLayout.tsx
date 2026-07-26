@@ -5,7 +5,6 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { useTheme } from '@/theme/ThemeContext';
 import { Sidebar } from './Sidebar';
 import { CommandPalette } from '@/design-system/primitives/CommandPalette';
 import { NotificationDrawer } from '@/modules/notifications/NotificationDrawer';
@@ -26,8 +25,6 @@ import { NotificationsModule } from '@/modules/notifications/NotificationsModule
 
 import {
   Bell,
-  Sun,
-  Moon,
   ChevronRight,
   LogOut,
 } from 'lucide-react';
@@ -46,7 +43,6 @@ export type ModuleTab =
 
 export const AppLayout: React.FC = () => {
   const { user, tenant, logout } = useAuth();
-  const { setThemeMode, resolvedTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState<ModuleTab>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -95,26 +91,17 @@ export const AppLayout: React.FC = () => {
             <ChevronRight className="w-3 h-3 text-slate-400" />
             <span>Analytics</span>
             <ChevronRight className="w-3 h-3 text-slate-400" />
-            <span className="font-bold text-slate-900 dark:text-slate-100 font-sans">
+            <span className="font-bold text-slate-900 font-sans">
               {getBreadcrumbTitle(activeTab)}
             </span>
           </div>
 
           {/* Right Action Controls matching reference screenshot */}
           <div className="flex items-center gap-3">
-            {/* Theme Toggle Pill Button */}
-            <button
-              onClick={() => setThemeMode(resolvedTheme === 'dark' ? 'light' : 'dark')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition-all cursor-pointer shadow-2xs"
-            >
-              {resolvedTheme === 'dark' ? <Moon className="w-3.5 h-3.5 text-indigo-400" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
-              <span>{resolvedTheme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
-            </button>
-
             {/* Notification Bell Badge */}
             <button
               onClick={() => setNotificationDrawerOpen(true)}
-              className="relative p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              className="relative p-2 rounded-full text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
@@ -124,14 +111,14 @@ export const AppLayout: React.FC = () => {
             </button>
 
             {/* User Profile Pill Avatar */}
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200 dark:border-white/10">
+            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
               <Avatar
                 name={user?.full_name || 'Alex Chen'}
                 size="sm"
                 className="ring-2 ring-blue-500/20"
               />
               <div className="hidden sm:block text-left">
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                <div className="text-xs font-bold text-slate-900 leading-tight">
                   {user?.full_name || 'Alex Chen'}
                 </div>
                 <div className="text-[10px] text-slate-400 font-mono">

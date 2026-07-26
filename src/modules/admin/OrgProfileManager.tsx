@@ -97,6 +97,29 @@ export const OrgProfileManager: React.FC = () => {
           </div>
         </div>
 
+        {/* Read-Only Plan & Seat Usage Summary (Managed via Ops Backend) */}
+        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-900 font-display">Subscription Tier: Enterprise Plan</span>
+              <Badge variant="emerald" size="sm">Active (Read-Only)</Badge>
+            </div>
+            <p className="text-3xs text-slate-500 font-sans">
+              Plan tiers and billing are managed by Vortiq Operations. Contact support@vortiq.biz to request additional seats.
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-2xs">
+            <div>
+              <span className="text-slate-400 block uppercase">Allocated Seats</span>
+              <span className="font-bold text-slate-900 text-sm">28 / 50</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block uppercase">Billing Cycle</span>
+              <span className="font-bold text-slate-900">Annual</span>
+            </div>
+          </div>
+        </div>
+
         {/* Form Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input

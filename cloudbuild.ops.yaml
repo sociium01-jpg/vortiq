@@ -1,0 +1,23 @@
+steps:
+  # 1. Build Ops Container image using Dockerfile.ops
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'Dockerfile.ops', '-t', 'gcr.io/$PROJECT_ID/vortiq-ops-app:latest', '.']
+
+  # 2. Push container image to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/vortiq-ops-app:latest']
+
+  # 3. Deploy ops container image to Cloud Run service vortiq-ops-app
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'vortiq-ops-app'
+      - '--image=gcr.io/$PROJECT_ID/vortiq-ops-app:latest'
+      - '--region=asia-south1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'gcr.io/$PROJECT_ID/vortiq-ops-app:latest'

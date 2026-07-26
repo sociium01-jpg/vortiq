@@ -80,7 +80,6 @@ export const OpsAuthGuard: React.FC<OpsAuthGuardProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Vortiq Operations Employee Authentication"
-      size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4 font-sans py-2">
         <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3">
