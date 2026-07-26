@@ -254,7 +254,7 @@ export const AppLayoutContent: React.FC = () => {
             {activeTab === 'marketing' && <MarketingModule />}
             {activeTab === 'tasks' && <TaskModule />}
             {activeTab === 'inventory' && <InventoryModule />}
-            {activeTab === 'vault' && <VaultModule />}
+            {activeTab === 'vault' && <VaultModule onNavigateToModule={(modKey) => setActiveTab(modKey as any)} />}
             {activeTab === 'admin' && <AdminModule />}
             {activeTab === 'notifications' && <NotificationsModule />}
           </ErrorBoundary>

@@ -48,7 +48,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenSignIn, onOpenSi
           --bg: #0B0E17; --surface: #12151F; --surface-alt: #171B27; --border: rgba(255,255,255,0.09);
           --text: #EDEEF3; --text-muted: #888D9C; --accent: #E5A93C; --teal: #22B8A3;
         }
-        .mono { font-family: 'IBM Plex Mono', monospace; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
         .bento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
         @media (max-width: 860px) { .bento { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 560px) { .bento { grid-template-columns: 1fr; } }

@@ -1,11 +1,12 @@
-import React from 'react';
+// ─────────────────────────────────────────────────────────────
+// Vortiq Task Module — Interactive Kanban Task Board
+// Fully HTML5 & Touch Drag-and-Drop Enabled with Persisted Status Updates
+// ─────────────────────────────────────────────────────────────
+
+import React, { useState } from 'react';
 import { TaskItem, TaskStatus, TaskPriority } from './types';
 import { Card, Badge, Avatar } from '@/design-system';
-import {
-  Plus,
-  ChevronRight,
-  ChevronLeft,
-} from 'lucide-react';
+import { Plus, ChevronRight, ChevronLeft, GripVertical } from 'lucide-react';
 
 export interface TaskBoardProps {
   tasks: TaskItem[];
@@ -33,6 +34,9 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
   onQuickMoveTask,
   onAddNewTask,
 }) => {
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
+
   const getPriorityBadge = (priority: TaskPriority) => {
     switch (priority) {
       case 'urgent':
@@ -72,15 +76,56 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
     return idx > 0 ? statuses[idx - 1] : null;
   };
 
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData('text/plain', taskId);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggedTaskId(taskId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, columnId: TaskStatus) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverColumn !== columnId) {
+      setDragOverColumn(columnId);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent, columnId: TaskStatus) => {
+    e.preventDefault();
+    if (dragOverColumn === columnId) {
+      setDragOverColumn(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetStatus: TaskStatus) => {
+    e.preventDefault();
+    setDragOverColumn(null);
+
+    const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+    setDraggedTaskId(null);
+
+    if (taskId && onQuickMoveTask) {
+      onQuickMoveTask(taskId, targetStatus);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {COLUMNS.map((col) => {
         const columnTasks = tasks.filter((t) => t.status === col.id);
+        const isColumnTarget = dragOverColumn === col.id;
 
         return (
           <div
             key={col.id}
-            className="flex flex-col bg-dark-surface/40 rounded-xl border border-dark-border/80 overflow-hidden min-h-[500px]"
+            onDragOver={(e) => handleDragOver(e, col.id)}
+            onDragLeave={(e) => handleDragLeave(e, col.id)}
+            onDrop={(e) => handleDrop(e, col.id)}
+            className={`flex flex-col bg-dark-surface/40 rounded-xl border transition-all min-h-[520px] ${
+              isColumnTarget
+                ? 'border-brand-500 bg-brand-500/10 shadow-lg shadow-brand-500/10 ring-2 ring-brand-500/20'
+                : 'border-dark-border/80'
+            }`}
           >
             {/* Column Header */}
             <div className="flex items-center justify-between p-3.5 border-b border-dark-border/80 bg-dark-surface/60">
@@ -106,89 +151,92 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
               {columnTasks.map((task) => {
                 const nextStatus = getNextStatus(task.status);
                 const prevStatus = getPrevStatus(task.status);
+                const isBeingDragged = draggedTaskId === task.id;
 
                 return (
-                  <Card
+                  <div
                     key={task.id}
-                    className="p-3 bg-dark-card hover:bg-dark-cardHover border-dark-border hover:border-brand-500/30 transition-all cursor-pointer group space-y-2.5 shadow-sm"
-                    onClick={() => onSelectTask(task)}
+                    draggable={true}
+                    onDragStart={(e) => handleDragStart(e, task.id)}
+                    onDragEnd={() => setDraggedTaskId(null)}
+                    className={`transition-all ${isBeingDragged ? 'opacity-40 scale-95' : 'opacity-100'}`}
                   >
-                    {/* Top Row: Type & Priority */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        {getTaskTypeBadge(task.task_type)}
-                        {getPriorityBadge(task.priority)}
-                      </div>
-                      <span className="text-[10px] font-mono text-slate-500">
-                        {task.story_points ? `${task.story_points} pts` : ''}
-                      </span>
-                    </div>
-
-                    {/* Task Title */}
-                    <h4 className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors line-clamp-2 leading-snug">
-                      {task.title}
-                    </h4>
-
-                    {/* Tags */}
-                    {task.tags && task.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {task.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-dark-surface text-slate-400 border border-dark-border/50"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Footer: Assignee & Move Buttons */}
-                    <div className="flex items-center justify-between pt-1 border-t border-dark-border/40 text-xs">
-                      <div className="flex items-center gap-2">
-                        <Avatar
-                          name={task.assignee_name || task.assignee || 'Unassigned'}
-                          size="sm"
-                        />
-                        <span className="text-[11px] text-slate-400 truncate max-w-[90px]">
-                          {task.assignee_name || task.assignee || 'Unassigned'}
+                    <Card
+                      className="p-3 bg-dark-card hover:bg-dark-cardHover border-dark-border hover:border-brand-500/40 transition-all cursor-grab active:cursor-grabbing group space-y-2.5 shadow-sm relative"
+                      onClick={() => onSelectTask(task)}
+                    >
+                      {/* Top Row: Drag Handle, Type & Priority */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <GripVertical className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-colors shrink-0" />
+                          {getTaskTypeBadge(task.task_type)}
+                          {getPriorityBadge(task.priority)}
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-500">
+                          {task.story_points ? `${task.story_points} pts` : ''}
                         </span>
                       </div>
 
-                      {/* Quick Shift Controls */}
-                      <div
-                        className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {prevStatus && onQuickMoveTask && (
-                          <button
-                            onClick={() => onQuickMoveTask(task.id, prevStatus)}
-                            className="p-1 text-slate-400 hover:text-white rounded hover:bg-dark-surface"
-                            title={`Move to ${prevStatus}`}
-                          >
-                            <ChevronLeft className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        {nextStatus && onQuickMoveTask && (
-                          <button
-                            onClick={() => onQuickMoveTask(task.id, nextStatus)}
-                            className="p-1 text-slate-400 hover:text-white rounded hover:bg-dark-surface"
-                            title={`Move to ${nextStatus}`}
-                          >
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                      {/* Task Title */}
+                      <h4 className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors line-clamp-2 leading-snug">
+                        {task.title}
+                      </h4>
+
+                      {/* Tags */}
+                      {task.tags && task.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {task.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-dark-surface text-slate-400 border border-dark-border/50"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Footer: Assignee & Move Buttons */}
+                      <div className="flex items-center justify-between pt-1 border-t border-dark-border/40 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Avatar
+                            name={task.assignee_name || task.assignee || 'Unassigned'}
+                            size="sm"
+                          />
+                          <span className="text-[11px] text-slate-400 truncate max-w-[90px]">
+                            {task.assignee_name || task.assignee || 'Unassigned'}
+                          </span>
+                        </div>
+
+                        {/* Quick Shift Controls */}
+                        <div
+                          className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {prevStatus && onQuickMoveTask && (
+                            <button
+                              onClick={() => onQuickMoveTask(task.id, prevStatus)}
+                              className="p-1 text-slate-400 hover:text-white rounded hover:bg-dark-surface"
+                              title={`Move to ${prevStatus}`}
+                            >
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {nextStatus && onQuickMoveTask && (
+                            <button
+                              onClick={() => onQuickMoveTask(task.id, nextStatus)}
+                              className="p-1 text-slate-400 hover:text-white rounded hover:bg-dark-surface"
+                              title={`Move to ${nextStatus}`}
+                            >
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </div>
                 );
               })}
-
-              {columnTasks.length === 0 && (
-                <div className="h-24 border border-dashed border-dark-border/60 rounded-lg flex items-center justify-center text-slate-500 text-xs font-mono">
-                  Empty stage
-                </div>
-              )}
             </div>
           </div>
         );

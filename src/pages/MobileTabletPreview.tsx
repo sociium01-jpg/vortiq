@@ -70,7 +70,7 @@ export const MobileTabletPreview: React.FC<MobileTabletPreviewProps> = () => {
           --bg: #0B0E17; --surface: #12151F; --surface-alt: #171B27; --border: rgba(255,255,255,0.09);
           --text: #EDEEF3; --text-muted: #888D9C; --accent: #E5A93C; --teal: #22B8A3;
         }
-        .mono { font-family: 'IBM Plex Mono', monospace; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
         .feed-row { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12px; align-items: baseline; }
         .feed-row .t { color: var(--text-muted); flex-shrink: 0; }
         .feed-row .amt { margin-left: auto; color: var(--teal); }

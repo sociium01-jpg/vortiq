@@ -105,7 +105,11 @@ const SEED_INVENTORY_RECORDS = [
   },
 ];
 
-export const VaultModule: React.FC = () => {
+interface VaultModuleProps {
+  onNavigateToModule?: (moduleKey: string, recordId?: string) => void;
+}
+
+export const VaultModule: React.FC<VaultModuleProps> = ({ onNavigateToModule }) => {
   const { user } = useAuth();
   const [activeDept, setActiveDept] = useState<VaultDepartment>('crm');
   const [searchQuery, setSearchQuery] = useState('');
@@ -343,6 +347,7 @@ export const VaultModule: React.FC = () => {
         data={currentDataset}
         activeSearch={searchQuery}
         onSearchChange={setSearchQuery}
+        onNavigateToModule={onNavigateToModule}
       />
 
       {/* Modals */}

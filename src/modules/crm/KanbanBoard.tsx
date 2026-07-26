@@ -158,17 +158,18 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     const isBeingDragged = draggedLeadId === lead.id;
 
                     return (
-                      <Card
+                      <div
                         key={lead.id}
-                        hoverable
-                        draggable
+                        draggable={true}
                         onDragStart={(e) => handleDragStart(e, lead.id)}
                         onDragEnd={() => setDraggedLeadId(null)}
-                        onClick={() => onLeadClick(lead)}
-                        className={`cursor-grab active:cursor-grabbing relative p-4 transition-all ${
-                          isBeingDragged ? 'opacity-40 scale-95 border-brand-500/50' : ''
-                        }`}
+                        className={`transition-all ${isBeingDragged ? 'opacity-40 scale-95' : 'opacity-100'}`}
                       >
+                        <Card
+                          hoverable
+                          onClick={() => onLeadClick(lead)}
+                          className="cursor-grab active:cursor-grabbing relative p-4 transition-all"
+                        >
                         {/* Card Header: Title & Priority */}
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <h4 className="text-xs font-bold text-slate-100 line-clamp-2 hover:text-brand-400 transition-colors font-display">
@@ -263,6 +264,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           </button>
                         </div>
                       </Card>
+                    </div>
                     );
                   })
                 )}
