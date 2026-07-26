@@ -49,10 +49,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Default Production Owner Credentials
+// Production Owner Configuration (Credentials provided via environment or auth system)
 export const PROD_CREDENTIALS = {
   email: 'admin@vortiq.biz',
-  password: 'Vortiq2026!Prod',
+  password: import.meta.env.VITE_PROD_ADMIN_PASSWORD || '',
   fullName: 'Vortiq Administrator',
   companyName: 'Vortiq Enterprise',
   orgCode: 'ORG-9901-VTQ',
@@ -292,7 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     } catch (err: any) {
       // Fallback for offline/mock environment
-      return login('admin@vortiq.biz', 'Vortiq2026!Prod', 'OWNER');
+      return login('admin@vortiq.biz', PROD_CREDENTIALS.password, 'OWNER');
     }
   };
 

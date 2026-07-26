@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input, Badge, Card } from '@/design-system';
-import { useAuth } from './AuthContext';
+import { useAuth, PROD_CREDENTIALS } from './AuthContext';
 import { LogIn, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface AuthModalProps {
@@ -114,21 +114,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div className="p-3 bg-brand-500/10 border border-brand-500/30 rounded-xl space-y-1.5">
               <div className="flex items-center justify-between text-2xs font-semibold">
-                <span className="text-brand-400 font-mono font-bold uppercase tracking-wider">Production Credentials</span>
+                <span className="text-brand-400 font-mono font-bold uppercase tracking-wider">Enterprise Single Sign-On</span>
                 <button
                   type="button"
                   onClick={() => {
-                    setEmail('admin@vortiq.biz');
-                    setPassword('Vortiq2026!Prod');
+                    setEmail(PROD_CREDENTIALS.email);
+                    setPassword(PROD_CREDENTIALS.password);
                   }}
                   className="text-brand-400 hover:text-brand-300 underline font-sans font-normal cursor-pointer"
                 >
-                  Auto-Fill Admin
+                  Auto-Fill Email
                 </button>
               </div>
               <div className="text-2xs font-mono text-slate-300 space-y-0.5">
-                <p>Email: <span className="text-slate-100 font-bold">admin@vortiq.biz</span></p>
-                <p>Password: <span className="text-slate-100 font-bold">Vortiq2026!Prod</span></p>
+                <p>Primary Domain: <span className="text-slate-100 font-bold">{PROD_CREDENTIALS.email}</span></p>
+                <p>Security: <span className="text-slate-100 font-bold">Multi-Factor OTP / OAuth Enforced</span></p>
               </div>
             </div>
 

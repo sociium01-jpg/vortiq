@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from './Button';
 import { Card } from './Card';
+import { logger } from '@/lib/logger';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
@@ -25,7 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error(`[ErrorBoundary] Error caught in ${this.props.moduleName || 'Module'}:`, error, errorInfo);
+    logger.error(`[ErrorBoundary] Error caught in ${this.props.moduleName || 'Module'}`, error, { errorInfo });
   }
 
   private handleReset = () => {
