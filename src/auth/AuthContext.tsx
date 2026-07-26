@@ -65,16 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { /* ignore */ }
     }
-    return {
-      id: 'usr-prod-owner-001',
-      tenant_id: 'tenant-prod-001',
-      email: PROD_CREDENTIALS.email,
-      full_name: PROD_CREDENTIALS.fullName,
-      role: PROD_CREDENTIALS.role,
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    return null;
   });
 
   const [tenant, setTenant] = useState<Tenant | null>(() => {
@@ -82,16 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { /* ignore */ }
     }
-    return {
-      id: 'tenant-prod-001',
-      org_code: PROD_CREDENTIALS.orgCode,
-      name: PROD_CREDENTIALS.companyName,
-      slug: 'vortiq-enterprise',
-      plan_tier: 'enterprise',
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    return null;
   });
 
   const [isLoading] = useState(false);
@@ -151,12 +133,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let orgCode = PROD_CREDENTIALS.orgCode;
     let companyName = PROD_CREDENTIALS.companyName;
     let fullName = cleanEmail === PROD_CREDENTIALS.email ? PROD_CREDENTIALS.fullName : cleanEmail.split('@')[0].toUpperCase();
+    let status: 'active' | 'pending_activation' | 'suspended' = 'active';
 
     if (verifiedMatch) {
       tenantId = verifiedMatch.tenantId;
       orgCode = verifiedMatch.orgCode;
       companyName = verifiedMatch.companyName;
       fullName = verifiedMatch.fullName;
+      status = (verifiedMatch as any).status || 'pending_activation';
+    }
+
+    // Gate login on Vortiq employee activation status
+    if (status === 'pending_activation') {
+      return {
+        success: false,
+        message: `Account Pending Activation: Organization ${orgCode} is awaiting approval by Vortiq Operations. Contact support@vortiq.biz or wait for activation notification.`,
+      };
+    }
+
+    if (status === 'suspended') {
+      return {
+        success: false,
+        message: `Account Suspended: Access for organization ${orgCode} has been suspended by Vortiq Operations.`,
+      };
     }
 
     const loginTenant: Tenant = {
@@ -228,51 +227,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const tenantId = `tenant-${Date.now()}`;
     const orgCode = generateOrgCode(pendingVerification.companyName);
 
-    const newTenant: Tenant = {
-      id: tenantId,
-      org_code: orgCode,
-      name: pendingVerification.companyName,
-      slug: pendingVerification.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-      plan_tier: 'enterprise',
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    const newUser: UserProfile = {
-      id: `usr-owner-${Date.now()}`,
-      tenant_id: tenantId,
-      email: pendingVerification.email,
-      full_name: pendingVerification.fullName,
-      role: 'OWNER',
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    // Save to verified directory
+    // Save to verified directory with pending_activation status
     saveVerifiedUser({
       email: pendingVerification.email,
       fullName: pendingVerification.fullName,
       companyName: pendingVerification.companyName,
       orgCode,
       tenantId,
+      status: 'pending_activation',
       verifiedAt: new Date().toISOString(),
     });
 
-    // Clean slate workspace for new organization
-    clearWorkspaceData(tenantId);
-    setActiveTenantId(tenantId);
-    setTenant(newTenant);
-    setUser(newUser);
-    setIsNewUser(true);
-    setIsDemoData(false);
     setPendingVerification(null);
     setIsVerifyModalOpen(false);
-    localStorage.setItem('vortiq_is_new_user', 'true');
-    setIsOnboardingOpen(true);
 
-    return { success: true };
+    return {
+      success: true,
+      message: `Registration Created! Organization ${orgCode} has been registered and is pending activation by Vortiq Operations. You will receive access once approved by a Vortiq employee.`,
+    };
   };
 
   const signInWithGoogle = async (): Promise<{ success: boolean; message?: string }> => {
@@ -318,7 +290,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setUser(null);
+    setTenant(null);
     localStorage.removeItem('vortiq_user');
+    localStorage.removeItem('vortiq_tenant');
   };
 
   const hasPermission = (requiredRole: UserRole): boolean => {

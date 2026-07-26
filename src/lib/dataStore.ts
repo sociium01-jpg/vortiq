@@ -102,6 +102,7 @@ export interface VerifiedUserAccount {
   companyName: string;
   orgCode: string;
   tenantId: string;
+  status?: 'active' | 'pending_activation' | 'suspended';
   verifiedAt: string;
 }
 
